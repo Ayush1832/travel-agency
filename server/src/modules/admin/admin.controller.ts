@@ -54,6 +54,30 @@ export class AdminController {
     private readonly supportService: SupportService,
   ) {}
 
+  // ── Dashboard ────────────────────────────────────────────────────────────────
+
+  @Get('dashboard/stats')
+  getDashboardStats() {
+    return this.adminService.getDashboardStats();
+  }
+
+  @Get('audit-logs')
+  @Roles(UserRole.SUPER_ADMIN)
+  getAuditLogs(
+    @Query('module') module?: string,
+    @Query('actorId') actorId?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('page') page = '1',
+    @Query('limit') limit = '20',
+  ) {
+    return this.adminService.getAuditLogs(
+      { module, actorId, from, to },
+      parseInt(page, 10),
+      parseInt(limit, 10),
+    );
+  }
+
   // ── Clients ──────────────────────────────────────────────────────────────────
 
   @Get('clients')
@@ -104,6 +128,16 @@ export class AdminController {
       if (body[key] !== undefined) updates[key] = body[key];
     }
     return this.adminService.updateClientProfile(id, updates);
+  }
+
+  @Post('clients/:id/reset-password')
+  @RequirePermission('clients', 'edit')
+  resetClientPassword(
+    @Param('id') id: string,
+    @Body() body: { newPassword: string },
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.adminService.resetClientPassword(id, body.newPassword, user.userId);
   }
 
   @Post('clients/:id/approve')
@@ -268,6 +302,15 @@ export class AdminController {
     @CurrentUser() user: AuthUser,
   ) {
     return this.adminService.refundBooking(id, dto, user.userId);
+  }
+
+  @Post('bookings/:id/resend-voucher')
+  @RequirePermission('bookings', 'edit')
+  resendVoucher(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.adminService.resendVoucher(id, user.userId);
   }
 
   @Post('bookings/:id/resync')

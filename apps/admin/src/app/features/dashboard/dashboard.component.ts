@@ -107,7 +107,7 @@ export class DashboardComponent implements OnInit {
     this.clientsService.reject(client._id, 'Rejected from dashboard').subscribe({
       next: () => {
         this.snackBar.open(`${client.companyName} rejected`, 'OK', { duration: 3000 });
-        this.pendingClients = this.pendingClients.filter(c => c._id !== client._._id);
+        this.pendingClients = this.pendingClients.filter(c => c._id !== client._id);
         this.kpi.pendingClients = Math.max(0, this.kpi.pendingClients - 1);
         this.approvingId = null;
       },

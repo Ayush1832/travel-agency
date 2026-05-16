@@ -19,7 +19,10 @@ export class HotelResultsComponent implements OnInit {
   filterMaxPrice = signal(10000);
   selectedStars = signal<number[]>([]);
   refundableOnly = signal(false);
+  selectedAmenities = signal<string[]>([]);
   sortBy = signal<'price-asc' | 'price-desc' | 'star-rating'>('price-asc');
+
+  readonly amenityOptions = ['WiFi', 'Pool', 'Parking', 'Breakfast', 'Gym', 'Spa', 'Restaurant', 'Air Conditioning'];
 
   filteredResults = computed(() => {
     let results = [...this.allResults()];
@@ -33,6 +36,16 @@ export class HotelResultsComponent implements OnInit {
     }
 
     results = results.filter((r) => r.priceFrom <= this.filterMaxPrice());
+
+    const amenities = this.selectedAmenities();
+    if (amenities.length > 0) {
+      results = results.filter((r) => {
+        const hotelAmenities = ((r as unknown as Record<string, unknown>)['amenities'] as string[] | undefined) ?? [];
+        return amenities.every((a) =>
+          hotelAmenities.some((ha) => ha.toLowerCase().includes(a.toLowerCase())),
+        );
+      });
+    }
 
     const sort = this.sortBy();
     if (sort === 'price-asc') results.sort((a, b) => a.priceFrom - b.priceFrom);
@@ -66,6 +79,19 @@ export class HotelResultsComponent implements OnInit {
     } else {
       this.selectedStars.set([...current, star]);
     }
+  }
+
+  toggleAmenity(amenity: string) {
+    const current = this.selectedAmenities();
+    if (current.includes(amenity)) {
+      this.selectedAmenities.set(current.filter((a) => a !== amenity));
+    } else {
+      this.selectedAmenities.set([...current, amenity]);
+    }
+  }
+
+  isAmenitySelected(amenity: string): boolean {
+    return this.selectedAmenities().includes(amenity);
   }
 
   isStarSelected(star: number): boolean {

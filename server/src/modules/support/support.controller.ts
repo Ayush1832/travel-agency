@@ -63,4 +63,9 @@ export class SupportController {
   closeTicket(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.supportService.closeTicket(id, user.companyId);
   }
+
+  @Patch(':id/reopen')
+  reopenTicket(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.supportService.reopenTicket(id, user.companyId);
+  }
 }

@@ -129,6 +129,15 @@ export class SupportService {
     return ticket.save();
   }
 
+  async reopenTicket(id: string, companyId: string): Promise<SupportTicketDocument> {
+    const ticket = await this.getTicket(id, companyId);
+    if (ticket.status !== TicketStatus.CLOSED) {
+      throw new ForbiddenException('Only closed tickets can be reopened');
+    }
+    ticket.status = TicketStatus.OPEN;
+    return ticket.save();
+  }
+
   // ── Admin methods ────────────────────────────────────────────────────────────
 
   async adminListTickets(

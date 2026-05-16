@@ -14,6 +14,7 @@ import {
 } from '../../db/schemas/notification.schema';
 import { User, UserDocument } from '../../db/schemas/user.schema';
 import { Company, CompanyDocument } from '../../db/schemas/company.schema';
+import { CmsEmailTemplate, CmsEmailTemplateDocument } from '../../db/schemas/cms-email-template.schema';
 
 export interface SendNotificationDto {
   recipientUserId?: string;
@@ -36,6 +37,8 @@ export class NotificationsService {
     private userModel: Model<UserDocument>,
     @InjectModel(Company.name)
     private companyModel: Model<CompanyDocument>,
+    @InjectModel(CmsEmailTemplate.name)
+    private emailTemplateModel: Model<CmsEmailTemplateDocument>,
     private config: ConfigService,
   ) {}
 
@@ -59,7 +62,7 @@ export class NotificationsService {
     if (dto.channel === NotificationChannel.EMAIL) {
       const recipientEmail = await this.resolveEmail(dto);
       if (recipientEmail) {
-        const html = this.buildEmailHtml(dto.title, dto.message);
+        const html = await this.renderEmailTemplate(dto.type, dto.title, dto.message, dto.data);
         await this.sendEmail(recipientEmail, dto.title, html);
       } else {
         this.logger.warn('[Email Notification] Could not resolve recipient email', {
@@ -69,12 +72,10 @@ export class NotificationsService {
         });
       }
     } else if (dto.channel === NotificationChannel.SMS) {
-      // SMS via Twilio or other provider — structured log until provider is configured
-      this.logger.log('[SMS Notification]', {
-        to: dto.recipientUserId || dto.recipientCompanyId,
-        type: dto.type,
-        message: dto.message,
-      });
+      const phone = await this.resolvePhone(dto);
+      if (phone) {
+        await this.sendSms(phone, dto.message);
+      }
     }
 
     return notification;
@@ -100,7 +101,40 @@ export class NotificationsService {
     return null;
   }
 
-  private buildEmailHtml(title: string, message: string): string {
+  /**
+   * Look up a CMS email template by notification type.
+   * Falls back to a default inline HTML template if none is found.
+   * Replaces {{title}}, {{message}}, and any keys in `data` as placeholders.
+   */
+  private async renderEmailTemplate(
+    type: NotificationType,
+    title: string,
+    message: string,
+    data?: Record<string, unknown>,
+  ): Promise<string> {
+    try {
+      const template = await this.emailTemplateModel
+        .findOne({ slug: type, isPublished: true })
+        .lean();
+
+      if (template?.body) {
+        let html = template.body as string;
+        html = html.replace(/\{\{title\}\}/g, title);
+        html = html.replace(/\{\{message\}\}/g, message);
+        if (data) {
+          for (const [k, v] of Object.entries(data)) {
+            html = html.replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), String(v));
+          }
+        }
+        return html;
+      }
+    } catch {
+      // fall through to default template
+    }
+    return this.buildDefaultEmailHtml(title, message);
+  }
+
+  private buildDefaultEmailHtml(title: string, message: string): string {
     return `
 <!DOCTYPE html>
 <html lang="en">
@@ -131,6 +165,78 @@ export class NotificationsService {
   </table>
 </body>
 </html>`.trim();
+  }
+
+  private async resolvePhone(dto: SendNotificationDto): Promise<string | null> {
+    if (dto.recipientUserId) {
+      const user = await this.userModel.findById(dto.recipientUserId).select('phone').lean();
+      return (user as unknown as Record<string, unknown>)?.phone as string ?? null;
+    }
+    if (dto.recipientCompanyId) {
+      const company = await this.companyModel.findById(dto.recipientCompanyId).select('phone').lean();
+      return (company as unknown as Record<string, unknown>)?.phone as string ?? null;
+    }
+    return null;
+  }
+
+  /**
+   * Send SMS via Twilio REST API.
+   * Requires: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER env vars.
+   * Falls back to structured log if credentials are not configured.
+   */
+  private async sendSms(to: string, body: string): Promise<void> {
+    const accountSid = this.config.get<string>('TWILIO_ACCOUNT_SID');
+    const authToken = this.config.get<string>('TWILIO_AUTH_TOKEN');
+    const fromNumber = this.config.get<string>('TWILIO_FROM_NUMBER');
+
+    if (!accountSid || !authToken || !fromNumber) {
+      this.logger.log('[SMS Notification] Twilio not configured — logging SMS instead', {
+        to,
+        bodyPreview: body.substring(0, 80),
+      });
+      return;
+    }
+
+    try {
+      const formBody = querystring.stringify({
+        To: to,
+        From: fromNumber,
+        Body: body,
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        const auth = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
+        const options: https.RequestOptions = {
+          method: 'POST',
+          hostname: 'api.twilio.com',
+          path: `/2010-04-01/Accounts/${accountSid}/Messages.json`,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Length': Buffer.byteLength(formBody),
+            'Authorization': `Basic ${auth}`,
+          },
+        };
+
+        const req = https.request(options, (res) => {
+          let data = '';
+          res.on('data', (chunk) => (data += chunk));
+          res.on('end', () => {
+            if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+              resolve();
+            } else {
+              reject(new Error(`Twilio returned HTTP ${res.statusCode}: ${data}`));
+            }
+          });
+        });
+        req.on('error', reject);
+        req.write(formBody);
+        req.end();
+      });
+
+      this.logger.log(`[SMS Notification] Sent to ${to}`);
+    } catch (err) {
+      this.logger.error(`[SMS Notification] Failed to send to ${to}`, err);
+    }
   }
 
   /**

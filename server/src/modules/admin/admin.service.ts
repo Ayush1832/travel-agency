@@ -592,4 +592,115 @@ export class AdminService implements OnModuleInit {
     if (!company) throw new NotFoundException('Company not found');
     return company;
   }
+
+  // ── Dashboard KPIs ────────────────────────────────────────────────────────────
+
+  async getDashboardStats() {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const [
+      totalClients,
+      activeClients,
+      pendingClients,
+      bookingsToday,
+      bookingsMonth,
+      revenueMonth,
+      totalOutstanding,
+      cancellationCount,
+      topClients,
+    ] = await Promise.all([
+      this.companyModel.countDocuments({ deletedAt: { $exists: false } }),
+      this.companyModel.countDocuments({ status: CompanyStatus.ACTIVE, deletedAt: { $exists: false } }),
+      this.companyModel.countDocuments({ status: CompanyStatus.PENDING, deletedAt: { $exists: false } }),
+      this.bookingModel.countDocuments({ createdAt: { $gte: startOfToday } }),
+      this.bookingModel.countDocuments({ createdAt: { $gte: startOfMonth } }),
+      this.bookingModel.aggregate([
+        { $match: { status: BookingStatus.CONFIRMED, createdAt: { $gte: startOfMonth } } },
+        { $group: { _id: null, total: { $sum: '$totalAmount' } } },
+      ]),
+      this.companyModel.aggregate([
+        { $match: { outstandingBalance: { $gt: 0 } } },
+        { $group: { _id: null, total: { $sum: '$outstandingBalance' } } },
+      ]),
+      this.bookingModel.countDocuments({ status: BookingStatus.CANCELLED, createdAt: { $gte: startOfMonth } }),
+      this.bookingModel.aggregate([
+        { $match: { status: BookingStatus.CONFIRMED } },
+        { $group: { _id: '$companyId', revenue: { $sum: '$totalAmount' } } },
+        { $sort: { revenue: -1 } },
+        { $limit: 5 },
+        { $lookup: { from: 'companies', localField: '_id', foreignField: '_id', as: 'company' } },
+        { $unwind: { path: '$company', preserveNullAndEmptyArrays: true } },
+        { $project: { revenue: 1, companyName: '$company.name', companyEmail: '$company.email' } },
+      ]),
+    ]);
+
+    return {
+      clients: { total: totalClients, active: activeClients, pending: pendingClients },
+      bookings: { today: bookingsToday, thisMonth: bookingsMonth, cancellations: cancellationCount },
+      revenue: { thisMonth: revenueMonth[0]?.total ?? 0 },
+      outstanding: { total: totalOutstanding[0]?.total ?? 0 },
+      topClients,
+    };
+  }
+
+  // ── Reset Client Password ─────────────────────────────────────────────────────
+
+  async resetClientPassword(companyId: string, newPassword: string, adminId: string) {
+    const users = await this.userModel.find({ companyId: new Types.ObjectId(companyId) });
+    if (!users.length) throw new NotFoundException('No users found for this company');
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+
+    await this.userModel.updateMany(
+      { companyId: new Types.ObjectId(companyId) },
+      { $set: { passwordHash, refreshTokenHash: null } },
+    );
+
+    return { reset: true, usersUpdated: users.length };
+  }
+
+  // ── Resend Voucher ────────────────────────────────────────────────────────────
+
+  async resendVoucher(bookingId: string, adminId: string) {
+    const booking = await this.bookingModel.findById(bookingId).populate('companyId', 'name email').lean();
+    if (!booking) throw new NotFoundException('Booking not found');
+
+    const company = booking.companyId as unknown as Record<string, unknown>;
+    const email = String(company.email ?? '');
+
+    // Notify the company via in-app notification
+    await this.sendNotification(
+      String((booking.companyId as unknown as Record<string, unknown>)._id ?? booking.companyId),
+      NotificationType.BOOKING_CONFIRMED,
+      'Booking Voucher',
+      `Your booking voucher for ${booking.hotel?.name ?? 'your hotel'} (Ref: ${booking.bookingRef}) has been resent.`,
+    );
+
+    return {
+      resent: true,
+      bookingRef: booking.bookingRef,
+      sentTo: email,
+    };
+  }
+
+  // ── Audit Log ────────────────────────────────────────────────────────────────
+
+  async getAuditLogs(filters: { module?: string; actorId?: string; from?: string; to?: string }, page = 1, limit = 20) {
+    const AuditLog = this.userModel.db.model('AuditLog');
+    const query: Record<string, unknown> = {};
+    if (filters.module) query.module = filters.module;
+    if (filters.actorId) query.actorId = new Types.ObjectId(filters.actorId);
+    if (filters.from || filters.to) {
+      query.createdAt = {};
+      if (filters.from) (query.createdAt as Record<string, unknown>).$gte = new Date(filters.from);
+      if (filters.to) (query.createdAt as Record<string, unknown>).$lte = new Date(filters.to);
+    }
+    const [data, total] = await Promise.all([
+      AuditLog.find(query).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+      AuditLog.countDocuments(query),
+    ]);
+    return { data, total, page, limit };
+  }
 }

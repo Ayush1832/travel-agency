@@ -4,6 +4,7 @@ import { BookingsController } from './bookings.controller';
 import { BookingsService } from './bookings.service';
 import { Booking, BookingSchema } from '../../db/schemas/booking.schema';
 import { BookingSequence, BookingSequenceSchema } from '../../db/schemas/booking-sequence.schema';
+import { ApiConfig, ApiConfigSchema } from '../../db/schemas/api-config.schema';
 import { IntegrationsModule } from '../integrations/integrations.module';
 import { CompaniesModule } from '../companies/companies.module';
 
@@ -12,6 +13,7 @@ import { CompaniesModule } from '../companies/companies.module';
     MongooseModule.forFeature([
       { name: Booking.name, schema: BookingSchema },
       { name: BookingSequence.name, schema: BookingSequenceSchema },
+      { name: ApiConfig.name, schema: ApiConfigSchema },
     ]),
     IntegrationsModule,
     CompaniesModule,

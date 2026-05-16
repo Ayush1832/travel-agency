@@ -82,7 +82,7 @@ export class CompaniesService {
   async creditBack(id: string, amount: number) {
     return this.companyModel.findByIdAndUpdate(
       id,
-      { $inc: { walletBalance: amount } },
+      { $inc: { walletBalance: amount, outstandingBalance: -amount } },
       { new: true },
     );
   }
@@ -91,6 +91,30 @@ export class CompaniesService {
     return this.companyModel.findByIdAndUpdate(
       id,
       { $inc: { walletBalance: amount } },
+      { new: true },
+    );
+  }
+
+  async addLoyaltyPoints(id: string, points: number) {
+    return this.companyModel.findByIdAndUpdate(
+      id,
+      { $inc: { loyaltyPoints: points } },
+      { new: true },
+    );
+  }
+
+  async incrementOutstanding(id: string, amount: number) {
+    return this.companyModel.findByIdAndUpdate(
+      id,
+      { $inc: { outstandingBalance: amount } },
+      { new: true },
+    );
+  }
+
+  async decrementOutstanding(id: string, amount: number) {
+    return this.companyModel.findByIdAndUpdate(
+      id,
+      { $inc: { outstandingBalance: -amount } },
       { new: true },
     );
   }

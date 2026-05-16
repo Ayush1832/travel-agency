@@ -50,6 +50,9 @@ export class Company {
   /** Top-up wallet balance (in minor units) */
   @Prop({ default: 0 }) walletBalance: number;
 
+  /** Outstanding balance (credit bookings not yet settled, in minor units) */
+  @Prop({ default: 0 }) outstandingBalance: number;
+
   /** Loyalty points balance */
   @Prop({ default: 0 }) loyaltyPoints: number;
 

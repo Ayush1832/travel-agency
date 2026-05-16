@@ -11,6 +11,7 @@ import { Model, Types } from 'mongoose';
 const PDFDocument = require('pdfkit') as typeof import('pdfkit');
 import { Booking, BookingDocument, BookingStatus, BookingCurrency, BookingPaymentMethod, BookingSupplier, RefundStatus } from '../../db/schemas/booking.schema';
 import { BookingSequence, BookingSequenceDocument } from '../../db/schemas/booking-sequence.schema';
+import { ApiConfig, ApiConfigDocument } from '../../db/schemas/api-config.schema';
 import { CompaniesService } from '../companies/companies.service';
 import { TboService } from '../integrations/tbo/tbo.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
@@ -24,6 +25,7 @@ export class BookingsService {
   constructor(
     @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
     @InjectModel(BookingSequence.name) private sequenceModel: Model<BookingSequenceDocument>,
+    @InjectModel(ApiConfig.name) private apiConfigModel: Model<ApiConfigDocument>,
     private readonly companiesService: CompaniesService,
     private readonly tboService: TboService,
   ) {}
@@ -46,6 +48,22 @@ export class BookingsService {
   private calcNights(checkIn: Date, checkOut: Date): number {
     const diff = checkOut.getTime() - checkIn.getTime();
     return Math.max(1, Math.round(diff / (1000 * 60 * 60 * 24)));
+  }
+
+  // ── Markup ──────────────────────────────────────────────────────────────────
+
+  private async getMarkupPercent(supplier: string): Promise<number> {
+    try {
+      const config = await this.apiConfigModel.findOne({ provider: supplier.toLowerCase() }).lean();
+      return config?.markupPercent ?? 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  private applyMarkup(baseAmount: number, markupPercent: number): { total: number; markup: number } {
+    const markup = Math.round(baseAmount * markupPercent / 100);
+    return { total: baseAmount + markup, markup };
   }
 
   // ── Loyalty points ───────────────────────────────────────────────────────────
@@ -75,7 +93,9 @@ export class BookingsService {
     if (dto.paymentMethod === 'credit') {
       // Prebook to get final price
       const prebook = await this.tboService.prebook(dto.prebookToken);
-      const totalAmount = prebook.finalPrice;
+      const baseAmount = prebook.finalPrice;
+      const markupPct = await this.getMarkupPercent('tbo');
+      const { total: totalAmount, markup: markupAmount } = this.applyMarkup(baseAmount, markupPct);
 
       const available = await this.companiesService.getAvailableCredit(companyId);
       if (available < totalAmount) {
@@ -168,10 +188,10 @@ export class BookingsService {
         checkOut,
         nights,
         currency: dto.currency as BookingCurrency,
-        baseAmount: totalAmount,
+        baseAmount,
         taxAmount: 0,
         totalAmount,
-        markupAmount: 0,
+        markupAmount,
         paymentMethod: BookingPaymentMethod.CREDIT,
         status: BookingStatus.CONFIRMED,
         specialRequests: dto.specialRequests ?? '',
@@ -180,19 +200,18 @@ export class BookingsService {
 
       const saved = await booking.save();
 
-      // Award loyalty points
+      // Track outstanding balance for credit bookings
+      try {
+        await this.companiesService.incrementOutstanding(companyId, totalAmount);
+      } catch {
+        this.logger.warn('Could not increment outstandingBalance — non-critical');
+      }
+
+      // Award loyalty points (best-effort)
       const points = this.calcLoyaltyPoints(totalAmount, dto.currency);
       if (points > 0) {
         try {
-          await this.companiesService.topUpWallet(companyId, 0); // no-op wallet, just loyalty
-          // Loyalty points are tracked in Company schema — increment directly
-          // CompaniesService doesn't have addLoyaltyPoints yet, so we use a workaround
-          await (this.companiesService as unknown as { companyModel: Model<unknown> })['companyModel']?.findByIdAndUpdate(
-            companyId,
-            { $inc: { loyaltyPoints: points } },
-          ).catch(() => {
-            this.logger.warn('Could not update loyalty points — skipping');
-          });
+          await this.companiesService.addLoyaltyPoints(companyId, points);
         } catch {
           this.logger.warn('Loyalty point update failed — non-critical');
         }
@@ -210,7 +229,9 @@ export class BookingsService {
 
       // Prebook to get final price
       const prebook = await this.tboService.prebook(dto.prebookToken);
-      const totalAmount = prebook.finalPrice;
+      const onlineBaseAmount = prebook.finalPrice;
+      const onlineMarkupPct = await this.getMarkupPercent('tbo');
+      const { total: totalAmount, markup: onlineMarkupAmount } = this.applyMarkup(onlineBaseAmount, onlineMarkupPct);
 
       const guestInfos: GuestInfo[] = dto.guests.map((g) => ({
         firstName: g.firstName,
@@ -299,10 +320,10 @@ export class BookingsService {
         checkOut,
         nights,
         currency: dto.currency as BookingCurrency,
-        baseAmount: totalAmount,
+        baseAmount: onlineBaseAmount,
         taxAmount: 0,
         totalAmount,
-        markupAmount: 0,
+        markupAmount: onlineMarkupAmount,
         paymentMethod: BookingPaymentMethod.ONLINE,
         paymentId: new Types.ObjectId(dto.paymentId),
         status: bookResult.confirmed ? BookingStatus.CONFIRMED : BookingStatus.FAILED,
@@ -312,14 +333,15 @@ export class BookingsService {
 
       const saved = await booking.save();
 
-      // Award loyalty points
-      const points = this.calcLoyaltyPoints(totalAmount, dto.currency);
-      if (points > 0) {
-        try {
-          await (this.companiesService as unknown as Record<string, unknown>)['companyModel']
-            && null; // loyalty update is best-effort
-        } catch {
-          // non-critical
+      // Award loyalty points for online payments (best-effort)
+      if (bookResult.confirmed) {
+        const pts = this.calcLoyaltyPoints(totalAmount, dto.currency);
+        if (pts > 0) {
+          try {
+            await this.companiesService.addLoyaltyPoints(companyId, pts);
+          } catch {
+            this.logger.warn('Loyalty point update failed — non-critical');
+          }
         }
       }
 

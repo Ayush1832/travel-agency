@@ -59,6 +59,20 @@
 
           <mat-divider></mat-divider>
 
+          <!-- Amenities -->
+          <div class="filter-section">
+            <h4>Amenities</h4>
+            <div *ngFor="let amenity of amenityOptions" class="star-filter-row">
+              <mat-checkbox
+                [checked]="isAmenitySelected(amenity)"
+                (change)="toggleAmenity(amenity)">
+                {{ amenity }}
+              </mat-checkbox>
+            </div>
+          </div>
+
+          <mat-divider></mat-divider>
+
           <!-- Refundable -->
           <div class="filter-section">
             <h4>Cancellation Policy</h4>
