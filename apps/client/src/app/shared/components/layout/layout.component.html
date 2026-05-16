@@ -1,0 +1,77 @@
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav #sidenav mode="side" opened class="sidenav">
+    <div class="sidenav-header">
+      <mat-icon class="logo-icon">flight_takeoff</mat-icon>
+      <h2>Travel B2B</h2>
+    </div>
+    <mat-divider></mat-divider>
+    <mat-nav-list>
+      <a mat-list-item routerLink="/dashboard" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>dashboard</mat-icon>
+        <span matListItemTitle>Dashboard</span>
+      </a>
+      <a mat-list-item routerLink="/hotels" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>hotel</mat-icon>
+        <span matListItemTitle>Search Hotels</span>
+      </a>
+      <a mat-list-item routerLink="/bookings" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>book_online</mat-icon>
+        <span matListItemTitle>My Bookings</span>
+      </a>
+      <a mat-list-item routerLink="/wallet" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>account_balance_wallet</mat-icon>
+        <span matListItemTitle>Wallet & Credit</span>
+      </a>
+      <a mat-list-item routerLink="/support" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>support_agent</mat-icon>
+        <span matListItemTitle>Support</span>
+      </a>
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <mat-toolbar color="primary" class="toolbar">
+      <span class="spacer"></span>
+
+      <button mat-icon-button [matMenuTriggerFor]="notifMenu" (menuOpened)="loadRecentNotifications()">
+        <mat-icon
+          [matBadge]="unreadCount()"
+          matBadgeColor="warn"
+          [matBadgeHidden]="unreadCount() === 0">notifications</mat-icon>
+      </button>
+      <mat-menu #notifMenu="matMenu" class="notifications-menu">
+        <div class="notif-header" (click)="$event.stopPropagation()">
+          <span>Notifications</span>
+          <button mat-button color="primary" (click)="markAllRead()">Mark all read</button>
+        </div>
+        <mat-divider></mat-divider>
+        <ng-container *ngIf="recentNotifications.length > 0; else noNotifs">
+          <button mat-menu-item *ngFor="let n of recentNotifications" [class.unread]="!n.isRead">
+            <div class="notif-item">
+              <strong>{{ n.title }}</strong>
+              <span class="notif-msg">{{ n.message }}</span>
+            </div>
+          </button>
+        </ng-container>
+        <ng-template #noNotifs>
+          <div class="no-notifs">No notifications</div>
+        </ng-template>
+      </mat-menu>
+
+      <span class="user-name">{{ currentUser()?.firstName }}</span>
+      <button mat-icon-button [matMenuTriggerFor]="userMenu">
+        <mat-icon>account_circle</mat-icon>
+      </button>
+      <mat-menu #userMenu="matMenu">
+        <button mat-menu-item (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>Sign Out</span>
+        </button>
+      </mat-menu>
+    </mat-toolbar>
+
+    <div class="content">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

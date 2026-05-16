@@ -1,0 +1,168 @@
+<div class="page-container">
+  <h2 class="page-title">Wallet & Credit</h2>
+
+  <div *ngIf="loading()" class="loading-center">
+    <mat-spinner></mat-spinner>
+  </div>
+
+  <ng-container *ngIf="!loading()">
+    <div class="wallet-grid">
+      <!-- Credit Overview -->
+      <mat-card class="credit-overview-card" *ngIf="balance() as b">
+        <mat-card-header>
+          <mat-icon mat-card-avatar class="credit-avatar">account_balance_wallet</mat-icon>
+          <mat-card-title>Credit Overview</mat-card-title>
+          <mat-card-subtitle>AED</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="balance-row">
+            <span>Credit Limit</span>
+            <strong>{{ b.creditLimit | number:'1.0-0' }} AED</strong>
+          </div>
+          <div class="balance-row">
+            <span>Wallet Balance</span>
+            <strong>{{ b.walletBalance | number:'1.0-0' }} AED</strong>
+          </div>
+          <div class="balance-row">
+            <span>Used</span>
+            <strong class="used">{{ b.usedCredit | number:'1.0-0' }} AED</strong>
+          </div>
+          <div class="balance-row available-row">
+            <span>Available Credit</span>
+            <strong class="available">{{ b.availableCredit | number:'1.0-0' }} AED</strong>
+          </div>
+          <mat-progress-bar
+            mode="determinate"
+            [value]="creditUsagePercent"
+            [color]="creditUsagePercent > 80 ? 'warn' : 'primary'"
+            class="credit-bar">
+          </mat-progress-bar>
+          <span class="usage-pct">{{ creditUsagePercent }}% used</span>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Loyalty Points -->
+      <mat-card class="loyalty-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar class="loyalty-avatar">stars</mat-icon>
+          <mat-card-title>Loyalty Points</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="loyalty-display">
+            <span class="loyalty-number">{{ loyaltyPoints() | number }}</span>
+            <span class="loyalty-label">points</span>
+            <span class="loyalty-value">≈ {{ (loyaltyPoints() * 0.01) | number:'1.2-2' }} AED</span>
+          </div>
+          <button mat-raised-button color="accent" (click)="openRedeemDialog()" class="full-width">
+            <mat-icon>redeem</mat-icon>
+            Redeem Points
+          </button>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Top Up -->
+      <mat-card class="topup-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar class="topup-avatar">add_card</mat-icon>
+          <mat-card-title>Top Up Wallet</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <form [formGroup]="topUpForm">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Amount</mat-label>
+              <input matInput type="number" formControlName="amount" placeholder="Enter amount" />
+              <mat-error *ngIf="topUpForm.get('amount')?.hasError('required')">Required</mat-error>
+              <mat-error *ngIf="topUpForm.get('amount')?.hasError('min')">Must be at least 1</mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Currency</mat-label>
+              <mat-select formControlName="currency">
+                <mat-option value="AED">AED</mat-option>
+                <mat-option value="USD">USD</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <button
+              mat-raised-button
+              color="primary"
+              class="full-width"
+              (click)="topUp()"
+              [disabled]="topping()">
+              <mat-spinner diameter="18" *ngIf="topping()"></mat-spinner>
+              <mat-icon *ngIf="!topping()">payment</mat-icon>
+              {{ topping() ? 'Redirecting...' : 'Top Up Online' }}
+            </button>
+          </form>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Transaction History -->
+    <mat-card class="transactions-card">
+      <mat-card-header>
+        <mat-card-title>Transaction History</mat-card-title>
+        <mat-form-field appearance="outline" class="type-filter" style="margin-left: auto">
+          <mat-label>Filter by Type</mat-label>
+          <mat-select [value]="typeFilter()" (valueChange)="onTypeFilter($event)">
+            <mat-option value="">All</mat-option>
+            <mat-option value="topup">Top-up</mat-option>
+            <mat-option value="credit_use">Credit Used</mat-option>
+            <mat-option value="credit_refund">Credit Refund</mat-option>
+            <mat-option value="loyalty_earn">Loyalty Earned</mat-option>
+            <mat-option value="loyalty_redeem">Points Redeemed</mat-option>
+            <mat-option value="adjustment">Adjustment</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-table [dataSource]="transactions()" class="full-width">
+          <ng-container matColumnDef="createdAt">
+            <mat-header-cell *matHeaderCellDef>Date</mat-header-cell>
+            <mat-cell *matCellDef="let t">{{ t.createdAt | date:'mediumDate' }}</mat-cell>
+          </ng-container>
+
+          <ng-container matColumnDef="type">
+            <mat-header-cell *matHeaderCellDef>Type</mat-header-cell>
+            <mat-cell *matCellDef="let t">
+              <span class="tx-type" [ngClass]="getTypeClass(t.type)">{{ getTypeLabel(t.type) }}</span>
+            </mat-cell>
+          </ng-container>
+
+          <ng-container matColumnDef="amount">
+            <mat-header-cell *matHeaderCellDef>Amount</mat-header-cell>
+            <mat-cell *matCellDef="let t">
+              <span [ngClass]="getTypeClass(t.type)">
+                {{ t.amount | number:'1.2-2' }} {{ t.currency }}
+              </span>
+            </mat-cell>
+          </ng-container>
+
+          <ng-container matColumnDef="balanceAfter">
+            <mat-header-cell *matHeaderCellDef>Balance After</mat-header-cell>
+            <mat-cell *matCellDef="let t">{{ t.balanceAfter | number:'1.2-2' }} AED</mat-cell>
+          </ng-container>
+
+          <ng-container matColumnDef="description">
+            <mat-header-cell *matHeaderCellDef>Description</mat-header-cell>
+            <mat-cell *matCellDef="let t">{{ t.description }}</mat-cell>
+          </ng-container>
+
+          <mat-header-row *matHeaderRowDef="txColumns"></mat-header-row>
+          <mat-row *matRowDef="let row; columns: txColumns"></mat-row>
+        </mat-table>
+
+        <div *ngIf="transactions().length === 0" class="empty-tx">
+          <mat-icon>receipt_long</mat-icon>
+          <p>No transactions yet</p>
+        </div>
+
+        <mat-paginator
+          [length]="total()"
+          [pageSize]="pageSize()"
+          [pageSizeOptions]="[10, 25, 50]"
+          (page)="onPage($event)"
+          *ngIf="total() > 0">
+        </mat-paginator>
+      </mat-card-content>
+    </mat-card>
+  </ng-container>
+</div>

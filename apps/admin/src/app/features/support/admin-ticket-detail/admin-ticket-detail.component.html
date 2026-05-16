@@ -1,0 +1,94 @@
+<div class="page-container">
+  <div class="page-header">
+    <a mat-icon-button routerLink="/support"><mat-icon>arrow_back</mat-icon></a>
+    <h1 class="page-title">Ticket {{ ticket?.ticketNo }}</h1>
+    <span class="spacer"></span>
+    <span class="status-chip" [ngClass]="priorityClass(ticket?.priority || '')" *ngIf="ticket" style="margin-right:8px">
+      {{ ticket?.priority }}
+    </span>
+    <span class="status-chip" [ngClass]="statusClass(ticket?.status || '')" *ngIf="ticket">
+      {{ ticket?.status }}
+    </span>
+  </div>
+
+  <div *ngIf="loading" class="loading-row"><mat-spinner diameter="48"></mat-spinner></div>
+
+  <div *ngIf="!loading && ticket" class="ticket-layout">
+    <!-- Left column: info + actions -->
+    <div class="ticket-sidebar">
+      <mat-card>
+        <mat-card-header><mat-card-title>Ticket Info</mat-card-title></mat-card-header>
+        <mat-card-content>
+          <div class="info-row"><span class="label">Subject</span><span>{{ ticket.subject }}</span></div>
+          <mat-divider></mat-divider>
+          <div class="info-row"><span class="label">Category</span><span>{{ ticket.category }}</span></div>
+          <mat-divider></mat-divider>
+          <div class="info-row"><span class="label">Company</span><span>{{ ticket.companyName || '—' }}</span></div>
+          <mat-divider></mat-divider>
+          <div class="info-row"><span class="label">Created</span><span>{{ ticket.createdAt | date:'medium' }}</span></div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card style="margin-top:16px">
+        <mat-card-header><mat-card-title>Assign & Status</mat-card-title></mat-card-header>
+        <mat-card-content>
+          <mat-form-field appearance="outline" class="full-width" style="margin-bottom:8px">
+            <mat-label>Assign To</mat-label>
+            <mat-select [formControl]="assigneeControl">
+              <mat-option value="">Unassigned</mat-option>
+              <mat-option *ngFor="let a of subAdmins" [value]="a._id">
+                {{ a.firstName }} {{ a.lastName }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <button mat-stroked-button color="primary" (click)="assign()" [disabled]="updating" class="full-width" style="margin-bottom:16px">
+            Assign
+          </button>
+
+          <mat-form-field appearance="outline" class="full-width" style="margin-bottom:8px">
+            <mat-label>Status</mat-label>
+            <mat-select [formControl]="statusControl">
+              <mat-option *ngFor="let s of statuses" [value]="s">{{ s }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <button mat-flat-button color="primary" (click)="updateStatus()" [disabled]="updating" class="full-width">
+            Update Status
+          </button>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Right column: messages + reply -->
+    <div class="ticket-messages">
+      <mat-card class="messages-card">
+        <mat-card-header><mat-card-title>Conversation</mat-card-title></mat-card-header>
+        <mat-card-content>
+          <div class="messages-list">
+            <div *ngFor="let msg of ticket.messages"
+                 class="message"
+                 [ngClass]="msg.senderType === 'admin' ? 'admin-msg' : 'client-msg'">
+              <div class="msg-bubble">
+                <div class="msg-sender">{{ msg.senderType === 'admin' ? 'Admin' : 'Client' }}</div>
+                <div class="msg-body">{{ msg.body }}</div>
+                <div class="msg-time">{{ msg.createdAt | date:'short' }}</div>
+              </div>
+            </div>
+            <div *ngIf="!ticket.messages?.length" class="empty-messages">No messages yet</div>
+          </div>
+
+          <mat-divider style="margin: 16px 0"></mat-divider>
+
+          <div class="reply-area">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Your Reply</mat-label>
+              <textarea matInput [formControl]="replyControl" rows="4" placeholder="Type your response..."></textarea>
+            </mat-form-field>
+            <button mat-flat-button color="primary" (click)="sendReply()" [disabled]="sending || !replyControl.value?.trim()">
+              <mat-icon>send</mat-icon> {{ sending ? 'Sending...' : 'Send Reply' }}
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

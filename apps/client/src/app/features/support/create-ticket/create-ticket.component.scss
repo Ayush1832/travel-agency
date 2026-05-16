@@ -1,0 +1,28 @@
+.back-btn { margin-bottom: 16px; }
+
+.create-card {
+  max-width: 720px;
+  margin: 0 auto;
+  border-radius: 12px;
+}
+
+.form-row-multi {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 0;
+}
+
+.submit-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+
+  button {
+    min-width: 140px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}

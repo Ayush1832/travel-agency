@@ -1,0 +1,156 @@
+.back-btn {
+  margin-bottom: 16px;
+}
+
+.carousel-container {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #f0f0f0;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.carousel-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #bbb;
+
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 8px;
+  }
+}
+
+.carousel-btn {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.9) !important;
+  z-index: 10;
+
+  &.prev { left: 16px; }
+  &.next { right: 16px; }
+}
+
+.image-counter {
+  position: absolute;
+  bottom: 12px;
+  right: 16px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.hotel-info-card {
+  border-radius: 16px;
+}
+
+.hotel-header {
+  padding: 16px 0;
+}
+
+.hotel-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.star-row {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.star-icon {
+  color: #ffc107;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.hotel-address {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #666;
+  font-size: 14px;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.description-section,
+.amenities-section,
+.rooms-section,
+.map-section {
+  padding: 20px 0;
+
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 12px;
+  }
+
+  p {
+    color: #555;
+    line-height: 1.7;
+  }
+}
+
+.rooms-table {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.map-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  color: #999;
+  gap: 8px;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+  }
+
+  p {
+    font-size: 16px;
+    font-weight: 500;
+    color: #666;
+  }
+
+  span {
+    font-size: 13px;
+  }
+}
+
+.loading-center {
+  display: flex;
+  justify-content: center;
+  padding: 80px;
+}

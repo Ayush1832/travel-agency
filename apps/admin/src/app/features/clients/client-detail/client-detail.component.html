@@ -1,0 +1,185 @@
+<div class="page-container">
+  <div class="page-header">
+    <a mat-icon-button routerLink="/clients"><mat-icon>arrow_back</mat-icon></a>
+    <h1 class="page-title">{{ company?.companyName || 'Client Detail' }}</h1>
+    <span class="spacer"></span>
+    <span class="status-chip" [ngClass]="statusClass(company?.status || '')" *ngIf="company">
+      {{ company?.status }}
+    </span>
+  </div>
+
+  <div *ngIf="loading" class="loading-row">
+    <mat-spinner diameter="48"></mat-spinner>
+  </div>
+
+  <div *ngIf="!loading && company" class="detail-grid">
+    <!-- Company Info -->
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>business</mat-icon>
+        <mat-card-title>Company Information</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-row"><span class="label">Company Name</span><span>{{ company.companyName }}</span></div>
+        <mat-divider></mat-divider>
+        <div class="info-row"><span class="label">Email</span><span>{{ company.email }}</span></div>
+        <mat-divider></mat-divider>
+        <div class="info-row"><span class="label">Phone</span><span>{{ company.phone }}</span></div>
+        <mat-divider></mat-divider>
+        <div class="info-row"><span class="label">Tax ID</span><span>{{ company.taxId || '—' }}</span></div>
+        <mat-divider></mat-divider>
+        <div class="info-row"><span class="label">Contact Person</span>
+          <span>{{ company.contactPerson?.firstName }} {{ company.contactPerson?.lastName }}</span></div>
+        <mat-divider></mat-divider>
+        <div class="info-row"><span class="label">Contact Email</span><span>{{ company.contactPerson?.email }}</span></div>
+        <mat-divider></mat-divider>
+        <div class="info-row"><span class="label">City</span><span>{{ company.address?.city || '—' }}</span></div>
+        <mat-divider></mat-divider>
+        <div class="info-row"><span class="label">Country</span><span>{{ company.address?.country || '—' }}</span></div>
+        <mat-divider></mat-divider>
+        <div class="info-row"><span class="label">Registered</span><span>{{ company.createdAt | date:'medium' }}</span></div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Credit & Balance -->
+    <mat-card class="credit-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>account_balance_wallet</mat-icon>
+        <mat-card-title>Credit & Balance</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="credit-grid">
+          <div class="credit-item">
+            <div class="credit-label">Credit Limit</div>
+            <div class="credit-value">{{ formatAed(company.creditLimit) }} <span class="cur">AED</span></div>
+          </div>
+          <div class="credit-item">
+            <div class="credit-label">Wallet Balance</div>
+            <div class="credit-value">{{ formatAed(company.walletBalance) }} <span class="cur">AED</span></div>
+          </div>
+          <div class="credit-item">
+            <div class="credit-label">Available Credit</div>
+            <div class="credit-value">
+              {{ formatAed(creditBalance?.availableCredit ?? company.creditLimit) }} <span class="cur">AED</span>
+            </div>
+          </div>
+          <div class="credit-item">
+            <div class="credit-label">Loyalty Points</div>
+            <div class="credit-value">{{ company.loyaltyPoints | number }} <span class="cur">pts</span></div>
+          </div>
+        </div>
+
+        <div class="credit-actions">
+          <button mat-stroked-button color="primary" (click)="openSetCreditLimit()">
+            <mat-icon>edit</mat-icon> Set Credit Limit
+          </button>
+          <button mat-stroked-button color="accent" (click)="openTopUp()">
+            <mat-icon>add_circle</mat-icon> Top Up Wallet
+          </button>
+          <button mat-stroked-button (click)="openSettlement()">
+            <mat-icon>receipt</mat-icon> Record Settlement
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Action Buttons -->
+    <mat-card class="actions-card">
+      <mat-card-header>
+        <mat-card-title>Client Actions</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="action-buttons">
+          <button mat-flat-button color="primary"
+                  *ngIf="company.status === 'pending'"
+                  (click)="approve()" [disabled]="actionLoading">
+            <mat-icon>check_circle</mat-icon> Approve
+          </button>
+          <button mat-flat-button color="warn"
+                  *ngIf="company.status === 'pending'"
+                  (click)="reject()" [disabled]="actionLoading">
+            <mat-icon>cancel</mat-icon> Reject
+          </button>
+          <button mat-flat-button color="warn"
+                  *ngIf="company.status === 'active'"
+                  (click)="suspend()" [disabled]="actionLoading">
+            <mat-icon>block</mat-icon> Suspend
+          </button>
+          <button mat-flat-button color="primary"
+                  *ngIf="company.status === 'suspended' || company.status === 'rejected'"
+                  (click)="activate()" [disabled]="actionLoading">
+            <mat-icon>play_circle</mat-icon> Activate
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Recent Bookings -->
+    <mat-card class="full-width-card">
+      <mat-card-header>
+        <mat-card-title>Recent Bookings</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <table mat-table [dataSource]="recentBookings" class="full-width" *ngIf="recentBookings.length > 0">
+          <ng-container matColumnDef="bookingRef">
+            <th mat-header-cell *matHeaderCellDef>Ref</th>
+            <td mat-cell *matCellDef="let b">{{ b.bookingRef }}</td>
+          </ng-container>
+          <ng-container matColumnDef="hotelName">
+            <th mat-header-cell *matHeaderCellDef>Hotel</th>
+            <td mat-cell *matCellDef="let b">{{ b.hotelName }}</td>
+          </ng-container>
+          <ng-container matColumnDef="checkIn">
+            <th mat-header-cell *matHeaderCellDef>Check-in</th>
+            <td mat-cell *matCellDef="let b">{{ b.checkIn | date:'mediumDate' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let b">
+              <span class="status-chip" [ngClass]="bookingStatusClass(b.status)">{{ b.status }}</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="totalAmount">
+            <th mat-header-cell *matHeaderCellDef>Amount</th>
+            <td mat-cell *matCellDef="let b">{{ formatAed(b.totalAmount) }} AED</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="bookingColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: bookingColumns;"></tr>
+        </table>
+        <div *ngIf="recentBookings.length === 0" class="empty-state">No bookings yet</div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Transaction History -->
+    <mat-card class="full-width-card">
+      <mat-card-header>
+        <mat-card-title>Transaction History</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div *ngIf="txLoading" class="loading-row"><mat-spinner diameter="32"></mat-spinner></div>
+        <table mat-table [dataSource]="transactions" class="full-width" *ngIf="!txLoading && transactions.length > 0">
+          <ng-container matColumnDef="createdAt">
+            <th mat-header-cell *matHeaderCellDef>Date</th>
+            <td mat-cell *matCellDef="let t">{{ t.createdAt | date:'medium' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef>Type</th>
+            <td mat-cell *matCellDef="let t">{{ t.type }}</td>
+          </ng-container>
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Description</th>
+            <td mat-cell *matCellDef="let t">{{ t.description }}</td>
+          </ng-container>
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef>Amount (AED)</th>
+            <td mat-cell *matCellDef="let t">{{ formatAed(t.amount) }}</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="txColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: txColumns;"></tr>
+        </table>
+        <div *ngIf="!txLoading && transactions.length === 0" class="empty-state">No transactions</div>
+        <mat-paginator [length]="txTotal" [pageSize]="txLimit" [pageSizeOptions]="[10, 25]" (page)="onTxPage($event)"></mat-paginator>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

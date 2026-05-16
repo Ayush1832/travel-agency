@@ -1,0 +1,38 @@
+{
+  "name": "travel-b2b",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "server",
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:server": "npm run dev --workspace=server",
+    "dev:client": "npm run start --workspace=apps/client",
+    "dev:admin": "npm run start --workspace=apps/admin",
+    "build:server": "npm run build --workspace=server",
+    "lint": "eslint \"{server,apps,packages}/**/*.ts\" --fix",
+    "format": "prettier --write \"{server,apps,packages}/**/*.{ts,html,scss,json}\"",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{html,scss,json}": [
+      "prettier --write"
+    ]
+  }
+}

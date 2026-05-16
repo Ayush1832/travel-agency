@@ -1,0 +1,119 @@
+<div class="page-container">
+  <div class="search-hero">
+    <h1>Find Your Perfect Hotel</h1>
+    <p>Search from thousands of hotels across Dubai & MENA</p>
+  </div>
+
+  <mat-card class="search-card">
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <!-- Destination -->
+        <div class="form-row">
+          <mat-form-field class="full-width" appearance="outline">
+            <mat-label>Destination</mat-label>
+            <mat-icon matPrefix>location_on</mat-icon>
+            <input
+              matInput
+              formControlName="destination"
+              [matAutocomplete]="auto"
+              placeholder="City, region or hotel name"
+            />
+            <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn">
+              <mat-option *ngFor="let s of (suggestions$ | async) ?? []" [value]="s">
+                <mat-icon>location_city</mat-icon>
+                {{ s.cityName }}, {{ s.country }}
+              </mat-option>
+            </mat-autocomplete>
+            <mat-error *ngIf="form.get('destination')?.hasError('required')">Destination is required</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Dates + Nationality + Currency -->
+        <div class="form-row multi-col">
+          <mat-form-field appearance="outline">
+            <mat-label>Check-in</mat-label>
+            <mat-icon matPrefix>calendar_today</mat-icon>
+            <input matInput [matDatepicker]="checkInPicker" formControlName="checkIn" [min]="today" readonly />
+            <mat-datepicker-toggle matIconSuffix [for]="checkInPicker"></mat-datepicker-toggle>
+            <mat-datepicker #checkInPicker></mat-datepicker>
+            <mat-error *ngIf="form.get('checkIn')?.hasError('required')">Check-in required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Check-out</mat-label>
+            <mat-icon matPrefix>calendar_today</mat-icon>
+            <input matInput [matDatepicker]="checkOutPicker" formControlName="checkOut" [min]="minCheckOut" readonly />
+            <mat-datepicker-toggle matIconSuffix [for]="checkOutPicker"></mat-datepicker-toggle>
+            <mat-datepicker #checkOutPicker></mat-datepicker>
+            <mat-error *ngIf="form.get('checkOut')?.hasError('required')">Check-out required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Nationality</mat-label>
+            <input matInput formControlName="nationality" placeholder="e.g. AE" />
+            <mat-error *ngIf="form.get('nationality')?.hasError('required')">Required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Currency</mat-label>
+            <mat-select formControlName="currency">
+              <mat-option value="AED">AED</mat-option>
+              <mat-option value="USD">USD</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Rooms -->
+        <div class="rooms-section">
+          <div class="rooms-header">
+            <h3>Rooms</h3>
+            <button mat-stroked-button type="button" (click)="addRoom()" [disabled]="rooms.length >= 5">
+              <mat-icon>add</mat-icon> Add Room
+            </button>
+          </div>
+
+          <div formArrayName="rooms" class="rooms-grid">
+            <mat-card *ngFor="let room of rooms.controls; let i = index" [formGroupName]="i" class="room-card">
+              <mat-card-header>
+                <mat-card-title>Room {{ i + 1 }}</mat-card-title>
+                <button mat-icon-button type="button" (click)="removeRoom(i)" *ngIf="rooms.length > 1" class="remove-room-btn">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="room-fields">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Adults</mat-label>
+                    <mat-select formControlName="adults">
+                      <mat-option *ngFor="let n of [1,2,3,4]" [value]="n">{{ n }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Children</mat-label>
+                    <mat-select formControlName="children">
+                      <mat-option *ngFor="let n of [0,1,2,3,4]" [value]="n">{{ n }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="submit-row">
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            class="search-btn"
+            [disabled]="searching()">
+            <mat-spinner diameter="20" *ngIf="searching()"></mat-spinner>
+            <mat-icon *ngIf="!searching()">search</mat-icon>
+            {{ searching() ? 'Searching...' : 'Search Hotels' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

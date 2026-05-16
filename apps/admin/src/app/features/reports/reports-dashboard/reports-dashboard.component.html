@@ -1,0 +1,33 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">Reports</h1>
+  </div>
+
+  <mat-card class="date-card">
+    <mat-card-content>
+      <div class="date-row">
+        <mat-form-field appearance="outline">
+          <mat-label>From</mat-label>
+          <input matInput type="date" [(ngModel)]="fromDate">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>To</mat-label>
+          <input matInput type="date" [(ngModel)]="toDate">
+        </mat-form-field>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <div class="reports-grid">
+    <mat-card *ngFor="let r of reports" class="report-card" (click)="navigate(r.route)">
+      <mat-card-content>
+        <mat-icon class="report-icon">{{ r.icon }}</mat-icon>
+        <h3>{{ r.title }}</h3>
+        <p>{{ r.desc }}</p>
+        <button mat-flat-button color="primary" style="margin-top:16px">
+          View Report <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

@@ -1,0 +1,91 @@
+<div class="page-container">
+  <div class="page-header">
+    <h2>My Bookings</h2>
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Search bookings</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput placeholder="Booking ref or hotel name" (input)="onSearch($event)" />
+    </mat-form-field>
+  </div>
+
+  <!-- Status Tabs -->
+  <mat-tab-group (selectedTabChange)="onTabChange(statusTabs[$event.index])" class="status-tabs">
+    <mat-tab *ngFor="let tab of statusTabs" [label]="tab | titlecase"></mat-tab>
+  </mat-tab-group>
+
+  <mat-card class="table-card">
+    <div *ngIf="loading()" class="loading-center">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+
+    <mat-table [dataSource]="bookings()" *ngIf="!loading()" class="full-width" (click)="null">
+      <ng-container matColumnDef="bookingRef">
+        <mat-header-cell *matHeaderCellDef>Booking Ref</mat-header-cell>
+        <mat-cell *matCellDef="let b">
+          <strong>{{ b.bookingRef }}</strong>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="hotel">
+        <mat-header-cell *matHeaderCellDef>Hotel</mat-header-cell>
+        <mat-cell *matCellDef="let b">{{ b.hotelName }}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="checkIn">
+        <mat-header-cell *matHeaderCellDef>Check-in</mat-header-cell>
+        <mat-cell *matCellDef="let b">{{ b.checkIn | date:'mediumDate' }}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="checkOut">
+        <mat-header-cell *matHeaderCellDef>Check-out</mat-header-cell>
+        <mat-cell *matCellDef="let b">{{ b.checkOut | date:'mediumDate' }}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <mat-header-cell *matHeaderCellDef>Status</mat-header-cell>
+        <mat-cell *matCellDef="let b">
+          <span class="status-badge" [ngClass]="getStatusClass(b.status)">{{ b.status }}</span>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="amount">
+        <mat-header-cell *matHeaderCellDef>Amount</mat-header-cell>
+        <mat-cell *matCellDef="let b">{{ b.totalAmount | number:'1.2-2' }} {{ b.currency }}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+        <mat-cell *matCellDef="let b">
+          <button mat-icon-button (click)="viewBooking(b._id)" matTooltip="View Details">
+            <mat-icon>visibility</mat-icon>
+          </button>
+          <button mat-icon-button (click)="downloadVoucher(b._id, $event)" matTooltip="Download Voucher" *ngIf="b.status === 'confirmed'">
+            <mat-icon>download</mat-icon>
+          </button>
+        </mat-cell>
+      </ng-container>
+
+      <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+      <mat-row
+        *matRowDef="let row; columns: displayedColumns"
+        (click)="viewBooking(row._id)"
+        class="clickable-row">
+      </mat-row>
+    </mat-table>
+
+    <div *ngIf="!loading() && bookings().length === 0" class="empty-state">
+      <mat-icon class="empty-icon">book_online</mat-icon>
+      <h3>No bookings found</h3>
+      <p>Start by searching for hotels</p>
+      <button mat-raised-button color="primary" routerLink="/hotels">Search Hotels</button>
+    </div>
+
+    <mat-paginator
+      [length]="total()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="[5, 10, 25]"
+      (page)="onPage($event)"
+      *ngIf="!loading() && total() > 0">
+    </mat-paginator>
+  </mat-card>
+</div>

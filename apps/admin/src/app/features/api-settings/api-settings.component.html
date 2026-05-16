@@ -1,0 +1,46 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">API Settings & Integrations</h1>
+  </div>
+
+  <div *ngIf="loading" class="loading-row"><mat-spinner diameter="48"></mat-spinner></div>
+
+  <div class="providers-grid" *ngIf="!loading">
+    <mat-card class="provider-card" *ngFor="let p of providers">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>{{ p.icon }}</mat-icon>
+        <mat-card-title>{{ p.name }}</mat-card-title>
+        <mat-card-subtitle>{{ p.type }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="provider-status">
+          <ng-container *ngIf="getConfig(p.key) as cfg">
+            <span class="status-chip" [ngClass]="cfg.isActive ? 'chip-active' : 'chip-suspended'">
+              {{ cfg.isActive ? 'Active' : 'Inactive' }}
+            </span>
+            <span class="last-tested" *ngIf="cfg.lastTestedAt">
+              Last tested: {{ cfg.lastTestedAt | date:'short' }}
+            </span>
+          </ng-container>
+          <span class="status-chip chip-pending" *ngIf="!getConfig(p.key)">Not configured</span>
+        </div>
+
+        <div class="test-result" *ngIf="testResults[p.key]">
+          <mat-icon [style.color]="testResults[p.key].success ? '#2e7d32' : '#c62828'">
+            {{ testResults[p.key].success ? 'check_circle' : 'error' }}
+          </mat-icon>
+          <span>{{ testResults[p.key].message }}</span>
+        </div>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-stroked-button color="primary" (click)="openConfigure(p.key)">
+          <mat-icon>settings</mat-icon> Configure
+        </button>
+        <button mat-stroked-button (click)="testConnection(p.key)" [disabled]="testing[p.key]">
+          <mat-icon>wifi_tethering</mat-icon>
+          {{ testing[p.key] ? 'Testing...' : 'Test Connection' }}
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+</div>

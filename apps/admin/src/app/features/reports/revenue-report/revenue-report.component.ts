@@ -1,0 +1,63 @@
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { ReportsService } from '../../../core/services/reports.service';
+import { RevenueReport } from '../../../core/models/report.models';
+
+@Component({
+  standalone: false,
+  selector: 'app-revenue-report',
+  templateUrl: './revenue-report.component.html',
+  styleUrls: ['./revenue-report.component.scss'],
+})
+export class RevenueReportComponent implements OnInit {
+  fromDate = '';
+  toDate = '';
+  report: RevenueReport | null = null;
+  loading = false;
+
+  displayedColumns = ['date', 'bookingsCount', 'grossAmount', 'markupAmount', 'netAmount'];
+
+  constructor(
+    private reportsService: ReportsService,
+    private route: ActivatedRoute,
+    private snackBar: MatSnackBar,
+  ) {}
+
+  ngOnInit() {
+    const now = new Date();
+    this.toDate = now.toISOString().split('T')[0];
+    this.fromDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const q = this.route.snapshot.queryParams;
+    if (q['from']) this.fromDate = q['from'];
+    if (q['to']) this.toDate = q['to'];
+    this.loadReport();
+  }
+
+  loadReport() {
+    this.loading = true;
+    this.reportsService.getRevenue(this.fromDate, this.toDate).subscribe({
+      next: (res) => { this.report = (res as any).data; this.loading = false; },
+      error: () => { this.snackBar.open('Failed to load report', 'OK', { duration: 3000 }); this.loading = false; }
+    });
+  }
+
+  exportExcel() {
+    this.reportsService.exportReport('revenue', 'xlsx', { from: this.fromDate, to: this.toDate }).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `revenue-${this.fromDate}-${this.toDate}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => this.snackBar.open('Export failed', 'OK', { duration: 3000 })
+    });
+  }
+
+  formatAed(fils: number): string {
+    if (!fils) return '0.00';
+    return (fils / 100).toLocaleString('en-AE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+}

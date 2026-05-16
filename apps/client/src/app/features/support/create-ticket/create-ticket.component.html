@@ -1,0 +1,70 @@
+<div class="page-container">
+  <button mat-stroked-button (click)="goBack()" class="back-btn">
+    <mat-icon>arrow_back</mat-icon> Back to Tickets
+  </button>
+
+  <mat-card class="create-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar>support_agent</mat-icon>
+      <mat-card-title>Create Support Ticket</mat-card-title>
+      <mat-card-subtitle>We'll respond within 24 hours</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="form">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Subject</mat-label>
+          <input matInput formControlName="subject" placeholder="Brief description of your issue" />
+          <mat-error *ngIf="form.get('subject')?.hasError('required')">Subject is required</mat-error>
+          <mat-error *ngIf="form.get('subject')?.hasError('minlength')">At least 5 characters</mat-error>
+        </mat-form-field>
+
+        <div class="form-row-multi">
+          <mat-form-field appearance="outline">
+            <mat-label>Category</mat-label>
+            <mat-select formControlName="category">
+              <mat-option *ngFor="let c of categories" [value]="c.value">{{ c.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Priority</mat-label>
+            <mat-select formControlName="priority">
+              <mat-option *ngFor="let p of priorities" [value]="p.value">{{ p.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Booking Ref (optional)</mat-label>
+            <input matInput formControlName="bookingRef" placeholder="e.g. BK-12345" />
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Message</mat-label>
+          <textarea
+            matInput
+            formControlName="message"
+            rows="8"
+            placeholder="Please describe your issue in detail...">
+          </textarea>
+          <mat-error *ngIf="form.get('message')?.hasError('required')">Message is required</mat-error>
+          <mat-error *ngIf="form.get('message')?.hasError('minlength')">At least 20 characters required</mat-error>
+        </mat-form-field>
+
+        <div class="submit-row">
+          <button mat-stroked-button type="button" (click)="goBack()">Cancel</button>
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            (click)="onSubmit()"
+            [disabled]="submitting()">
+            <mat-spinner diameter="18" *ngIf="submitting()"></mat-spinner>
+            <mat-icon *ngIf="!submitting()">send</mat-icon>
+            {{ submitting() ? 'Submitting...' : 'Submit Ticket' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

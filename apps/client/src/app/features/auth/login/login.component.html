@@ -1,0 +1,38 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <h1>Sign In</h1>
+    <p class="subtitle">B2B Travel Portal</p>
+
+    <div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input id="email" type="email" formControlName="email" placeholder="agency@example.com" />
+        <span class="field-error" *ngIf="form.get('email')?.touched && form.get('email')?.invalid">
+          Valid email is required
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input id="password" type="password" formControlName="password" placeholder="••••••••" />
+        <span class="field-error" *ngIf="form.get('password')?.touched && form.get('password')?.invalid">
+          Password must be at least 8 characters
+        </span>
+      </div>
+
+      <div class="form-actions">
+        <a routerLink="/auth/forgot-password">Forgot password?</a>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block" [disabled]="loading || form.invalid">
+        {{ loading ? 'Signing in…' : 'Sign In' }}
+      </button>
+    </form>
+
+    <p class="auth-footer">
+      New agency? <a routerLink="/auth/register">Request access</a>
+    </p>
+  </div>
+</div>

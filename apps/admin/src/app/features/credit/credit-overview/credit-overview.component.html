@@ -1,0 +1,33 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">Credit & Wallet Management</h1>
+  </div>
+
+  <mat-card class="info-banner">
+    <mat-card-content>
+      <div class="info-content">
+        <mat-icon class="info-icon">info_outline</mat-icon>
+        <div>
+          <h3>Credit management is accessible from each client's detail page</h3>
+          <p>To manage credit limits, top up wallets, and record settlements, navigate to a specific client's profile.</p>
+          <a mat-flat-button color="primary" routerLink="/clients" style="margin-top:12px">
+            <mat-icon>people</mat-icon> Go to Clients
+          </a>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card style="margin-top: 24px">
+    <mat-card-header>
+      <mat-card-title>Outstanding Accounts</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="empty-state">
+        <mat-icon>account_balance</mat-icon>
+        <p>Outstanding tracking is managed externally per current configuration.</p>
+        <p>Please refer to your accounting system for outstanding balance reports.</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

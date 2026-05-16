@@ -1,0 +1,135 @@
+<div class="page-container" *ngIf="!loading(); else loadingTpl">
+  <button mat-stroked-button (click)="goBack()" class="back-btn">
+    <mat-icon>arrow_back</mat-icon> Back to Bookings
+  </button>
+
+  <ng-container *ngIf="booking() as b">
+    <div class="detail-layout">
+      <!-- Main Info -->
+      <div class="detail-main">
+        <mat-card class="detail-card">
+          <mat-card-header>
+            <mat-icon mat-card-avatar class="hotel-avatar">hotel</mat-icon>
+            <mat-card-title>{{ b.hotelName }}</mat-card-title>
+            <mat-card-subtitle>Booking Ref: {{ b.bookingRef }}</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <span class="status-badge" [ngClass]="getStatusClass(b.status)">{{ b.status }}</span>
+
+            <div class="detail-grid">
+              <div class="detail-item">
+                <mat-icon>calendar_today</mat-icon>
+                <div>
+                  <span class="label">Check-in</span>
+                  <strong>{{ b.checkIn | date:'longDate' }}</strong>
+                </div>
+              </div>
+              <div class="detail-item">
+                <mat-icon>event</mat-icon>
+                <div>
+                  <span class="label">Check-out</span>
+                  <strong>{{ b.checkOut | date:'longDate' }}</strong>
+                </div>
+              </div>
+              <div class="detail-item">
+                <mat-icon>bed</mat-icon>
+                <div>
+                  <span class="label">Room Type</span>
+                  <strong>{{ b.roomType }}</strong>
+                </div>
+              </div>
+              <div class="detail-item">
+                <mat-icon>payment</mat-icon>
+                <div>
+                  <span class="label">Payment Method</span>
+                  <strong>{{ b.paymentMethod | titlecase }}</strong>
+                </div>
+              </div>
+              <div class="detail-item">
+                <mat-icon>attach_money</mat-icon>
+                <div>
+                  <span class="label">Total Amount</span>
+                  <strong class="amount">{{ b.totalAmount | number:'1.2-2' }} {{ b.currency }}</strong>
+                </div>
+              </div>
+              <div class="detail-item">
+                <mat-icon>schedule</mat-icon>
+                <div>
+                  <span class="label">Booked On</span>
+                  <strong>{{ b.createdAt | date:'mediumDate' }}</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Special Requests -->
+            <div class="special-requests" *ngIf="b.specialRequests">
+              <h4>Special Requests</h4>
+              <p>{{ b.specialRequests }}</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Guest List -->
+        <mat-card class="guests-card" *ngIf="b.guests && b.guests.length > 0">
+          <mat-card-header>
+            <mat-card-title>Guests</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div *ngFor="let g of b.guests; let i = index" class="guest-row">
+              <mat-icon>person</mat-icon>
+              <span>{{ g.title }} {{ g.firstName }} {{ g.lastName }}</span>
+              <span class="lead-badge" *ngIf="g.isLead">Lead Guest</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Cancellation Policy -->
+        <mat-card class="policy-card" *ngIf="b.cancellationPolicy">
+          <mat-card-header>
+            <mat-card-title>Cancellation Policy</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <p>{{ b.cancellationPolicy }}</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Right Panel: Actions -->
+      <div class="detail-side">
+        <mat-card class="actions-card">
+          <mat-card-header>
+            <mat-card-title>Actions</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="action-buttons">
+              <button
+                mat-raised-button
+                color="primary"
+                class="full-width"
+                (click)="downloadVoucher()"
+                *ngIf="b.status === 'confirmed'">
+                <mat-icon>download</mat-icon>
+                Download Voucher
+              </button>
+              <button
+                mat-stroked-button
+                color="warn"
+                class="full-width"
+                (click)="openCancelDialog()"
+                *ngIf="canCancel()">
+                <mat-icon>cancel</mat-icon>
+                Cancel Booking
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </ng-container>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="loading-center">
+    <mat-spinner></mat-spinner>
+  </div>
+</ng-template>

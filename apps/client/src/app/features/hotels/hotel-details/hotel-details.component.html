@@ -1,0 +1,127 @@
+<div class="page-container" *ngIf="!loading(); else loadingTpl">
+  <button mat-stroked-button (click)="goBack()" class="back-btn">
+    <mat-icon>arrow_back</mat-icon> Back to Results
+  </button>
+
+  <ng-container *ngIf="hotel() as h">
+    <!-- Image Carousel -->
+    <div class="carousel-container">
+      <button mat-icon-button class="carousel-btn prev" (click)="prevImage()" *ngIf="h.images.length > 1">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <img
+        *ngIf="h.images.length > 0"
+        [src]="h.images[currentImageIndex()]"
+        [alt]="h.name"
+        class="carousel-image"
+        onerror="this.src='https://via.placeholder.com/1000x400?text=Hotel'"
+      />
+      <div *ngIf="h.images.length === 0" class="carousel-placeholder">
+        <mat-icon>photo</mat-icon>
+        <p>No images available</p>
+      </div>
+      <button mat-icon-button class="carousel-btn next" (click)="nextImage()" *ngIf="h.images.length > 1">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+      <div class="image-counter" *ngIf="h.images.length > 1">
+        {{ currentImageIndex() + 1 }} / {{ h.images.length }}
+      </div>
+    </div>
+
+    <!-- Hotel Info -->
+    <mat-card class="hotel-info-card">
+      <mat-card-content>
+        <div class="hotel-header">
+          <div>
+            <h1 class="hotel-title">{{ h.name }}</h1>
+            <div class="star-row">
+              <mat-icon *ngFor="let s of getStarArray(h.starRating)" class="star-icon">star</mat-icon>
+            </div>
+            <p class="hotel-address">
+              <mat-icon>location_on</mat-icon>
+              {{ h.address }}, {{ h.city }}, {{ h.country }}
+            </p>
+          </div>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <!-- Description -->
+        <div class="description-section" *ngIf="h.description">
+          <h3>About this hotel</h3>
+          <p>{{ h.description }}</p>
+        </div>
+
+        <!-- Amenities -->
+        <div class="amenities-section" *ngIf="h.amenities.length > 0">
+          <h3>Amenities</h3>
+          <mat-chip-set>
+            <mat-chip *ngFor="let amenity of h.amenities">{{ amenity }}</mat-chip>
+          </mat-chip-set>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <!-- Rooms Table -->
+        <div class="rooms-section">
+          <h3>Available Rooms</h3>
+          <mat-table [dataSource]="h.rooms" class="full-width rooms-table">
+            <ng-container matColumnDef="roomType">
+              <mat-header-cell *matHeaderCellDef>Room Type</mat-header-cell>
+              <mat-cell *matCellDef="let r">{{ r.roomType }}</mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="mealPlan">
+              <mat-header-cell *matHeaderCellDef>Meal Plan</mat-header-cell>
+              <mat-cell *matCellDef="let r">{{ r.mealPlan }}</mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="refundable">
+              <mat-header-cell *matHeaderCellDef>Cancellation</mat-header-cell>
+              <mat-cell *matCellDef="let r">
+                <span class="status-badge" [class.status-confirmed]="r.isRefundable" [class.status-cancelled]="!r.isRefundable">
+                  {{ r.isRefundable ? 'Refundable' : 'Non-refundable' }}
+                </span>
+              </mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="price">
+              <mat-header-cell *matHeaderCellDef>Price / Night</mat-header-cell>
+              <mat-cell *matCellDef="let r">
+                <strong>{{ r.price | number:'1.0-0' }} {{ r.currency }}</strong>
+              </mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="action">
+              <mat-header-cell *matHeaderCellDef></mat-header-cell>
+              <mat-cell *matCellDef="let r">
+                <button mat-raised-button color="primary" (click)="selectRoom(r)">
+                  Select
+                </button>
+              </mat-cell>
+            </ng-container>
+
+            <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+            <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
+          </mat-table>
+        </div>
+
+        <!-- Map Placeholder -->
+        <div class="map-section">
+          <h3>Location</h3>
+          <div class="map-placeholder">
+            <mat-icon>map</mat-icon>
+            <p>Map coming soon</p>
+            <span>{{ h.address }}, {{ h.city }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </ng-container>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="loading-center">
+    <mat-spinner></mat-spinner>
+  </div>
+</ng-template>

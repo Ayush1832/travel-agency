@@ -1,0 +1,155 @@
+.dashboard-header {
+  margin-bottom: 24px;
+
+  .welcome-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    color: #666;
+    font-size: 15px;
+  }
+}
+
+.loading-center {
+  display: flex;
+  justify-content: center;
+  padding: 80px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  border-radius: 12px;
+}
+
+.card-icon {
+  border-radius: 50%;
+  padding: 8px;
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.credit-icon { background: #e8eaf6; color: #3f51b5; }
+.booking-icon { background: #e3f2fd; color: #1976d2; }
+.loyalty-icon { background: #fff8e1; color: #f57f17; }
+
+.credit-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 14px;
+  border-bottom: 1px solid #f0f0f0;
+
+  &.highlight {
+    font-weight: 600;
+    border-bottom: none;
+  }
+}
+
+.available-amount {
+  color: #2e7d32;
+  font-size: 16px;
+}
+
+.credit-bar {
+  margin-top: 12px;
+  border-radius: 4px;
+}
+
+.usage-label {
+  font-size: 12px;
+  color: #666;
+}
+
+.booking-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 16px 0;
+  gap: 16px;
+}
+
+.booking-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+
+  .stat-number {
+    font-size: 32px;
+    font-weight: 700;
+    color: #333;
+
+    &.confirmed-count { color: #2e7d32; }
+    &.month-count { color: #1565c0; }
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: #666;
+  }
+}
+
+.loyalty-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0;
+
+  .loyalty-points {
+    font-size: 40px;
+    font-weight: 700;
+    color: #f57f17;
+  }
+
+  .loyalty-label {
+    font-size: 14px;
+    color: #666;
+    margin-top: -4px;
+  }
+
+  .loyalty-value {
+    font-size: 13px;
+    color: #999;
+    margin-top: 8px;
+  }
+}
+
+.quick-actions-card {
+  border-radius: 12px;
+  margin-bottom: 24px;
+
+  .actions-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 8px 0;
+
+    button {
+      gap: 8px;
+    }
+  }
+}
+
+.recent-bookings-card {
+  border-radius: 12px;
+  margin-bottom: 24px;
+
+  mat-card-header {
+    display: flex;
+    align-items: center;
+  }
+}

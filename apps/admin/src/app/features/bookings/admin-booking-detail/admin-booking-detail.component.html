@@ -1,0 +1,100 @@
+<div class="page-container">
+  <div class="page-header">
+    <a mat-icon-button routerLink="/bookings"><mat-icon>arrow_back</mat-icon></a>
+    <h1 class="page-title">Booking {{ booking?.bookingRef }}</h1>
+    <span class="spacer"></span>
+    <span class="status-chip" [ngClass]="statusClass(booking?.status || '')" *ngIf="booking">
+      {{ booking?.status }}
+    </span>
+  </div>
+
+  <div *ngIf="loading" class="loading-row"><mat-spinner diameter="48"></mat-spinner></div>
+
+  <div *ngIf="!loading && booking" class="detail-grid">
+    <!-- Booking Info -->
+    <mat-card>
+      <mat-card-header>
+        <mat-icon mat-card-avatar>book_online</mat-icon>
+        <mat-card-title>Booking Information</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-row"><span class="label">Booking Ref</span><span>{{ booking.bookingRef }}</span></div>
+        <mat-divider></mat-divider>
+        <div class="info-row"><span class="label">Hotel</span><span>{{ booking.hotelName }}</span></div>
+        <mat-divider></mat-divider>
+        <div class="info-row"><span class="label">Room Type</span><span>{{ booking.roomType || '—' }}</span></div>
+        <mat-divider></mat-divider>
+        <div class="info-row"><span class="label">Check-in</span><span>{{ booking.checkIn | date:'mediumDate' }}</span></div>
+        <mat-divider></mat-divider>
+        <div class="info-row"><span class="label">Check-out</span><span>{{ booking.checkOut | date:'mediumDate' }}</span></div>
+        <mat-divider></mat-divider>
+        <div class="info-row"><span class="label">Guests</span><span>{{ booking.guests || 1 }}</span></div>
+        <mat-divider></mat-divider>
+        <div class="info-row"><span class="label">Total Amount</span><span class="amount">{{ formatAed(booking.totalAmount) }} AED</span></div>
+        <mat-divider></mat-divider>
+        <div class="info-row"><span class="label">Payment Method</span><span>{{ booking.paymentMethod }}</span></div>
+        <mat-divider></mat-divider>
+        <div class="info-row"><span class="label">Booked On</span><span>{{ booking.createdAt | date:'medium' }}</span></div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Guest Info -->
+    <mat-card>
+      <mat-card-header>
+        <mat-icon mat-card-avatar>person</mat-icon>
+        <mat-card-title>Guest Information</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-row"><span class="label">Guest Name</span><span>{{ booking.guestName || '—' }}</span></div>
+        <mat-divider></mat-divider>
+        <div class="info-row"><span class="label">Guest Email</span><span>{{ booking.guestEmail || '—' }}</span></div>
+        <mat-divider></mat-divider>
+        <div class="info-row"><span class="label">Company</span><span>{{ booking.companyName || '—' }}</span></div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Status Update -->
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Update Status</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="action-row">
+          <mat-form-field appearance="outline" style="flex:1">
+            <mat-label>Status</mat-label>
+            <mat-select [formControl]="statusControl">
+              <mat-option *ngFor="let s of statuses" [value]="s">{{ s }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <button mat-flat-button color="primary" (click)="updateStatus()" [disabled]="updating">
+            Update Status
+          </button>
+        </div>
+
+        <div *ngIf="booking.status === 'confirmed'" style="margin-top:16px">
+          <button mat-flat-button color="warn" (click)="cancelBooking()" [disabled]="updating">
+            <mat-icon>cancel</mat-icon> Cancel Booking
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Refund -->
+    <mat-card *ngIf="booking.status === 'cancelled' || booking.status === 'refunded'">
+      <mat-card-header>
+        <mat-card-title>Issue Refund</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="action-row">
+          <mat-form-field appearance="outline" style="flex:1">
+            <mat-label>Refund Amount (AED)</mat-label>
+            <input matInput type="number" [formControl]="refundAmount" min="0" step="0.01">
+          </mat-form-field>
+          <button mat-flat-button color="accent" (click)="issueRefund()" [disabled]="updating">
+            <mat-icon>undo</mat-icon> Issue Refund
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

@@ -1,0 +1,167 @@
+<div class="page-container">
+  <h2 class="page-title">Complete Your Booking</h2>
+
+  <div class="checkout-layout" *ngIf="form" [formGroup]="form">
+    <!-- Left: Booking Details -->
+    <div class="checkout-left">
+      <!-- Booking Summary -->
+      <mat-card class="summary-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>hotel</mat-icon>
+          <mat-card-title>Booking Summary</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="summary-row">
+            <span>Hotel</span>
+            <strong>{{ hotelName() }}</strong>
+          </div>
+          <div class="summary-row" *ngIf="searchDto() as dto">
+            <span>Check-in</span>
+            <strong>{{ dto.checkIn }}</strong>
+          </div>
+          <div class="summary-row" *ngIf="searchDto() as dto">
+            <span>Check-out</span>
+            <strong>{{ dto.checkOut }}</strong>
+          </div>
+          <div class="summary-row">
+            <span>Nights</span>
+            <strong>{{ nights() }}</strong>
+          </div>
+          <div class="summary-row" *ngIf="selectedRoom() as room">
+            <span>Room Type</span>
+            <strong>{{ room.roomType }}</strong>
+          </div>
+          <div class="summary-row" *ngIf="selectedRoom() as room">
+            <span>Meal Plan</span>
+            <strong>{{ room.mealPlan }}</strong>
+          </div>
+          <mat-divider></mat-divider>
+          <div class="summary-row total-row" *ngIf="selectedRoom() as room">
+            <span>Total Amount</span>
+            <strong class="total-amount">{{ totalAmount() | number:'1.2-2' }} {{ room.currency }}</strong>
+          </div>
+
+          <!-- Cancellation Policy -->
+          <div class="policy-section" *ngIf="selectedRoom()?.cancellationPolicy">
+            <h4>Cancellation Policy</h4>
+            <p>{{ selectedRoom()?.cancellationPolicy }}</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Guest Details -->
+      <mat-card class="guests-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>person</mat-icon>
+          <mat-card-title>Lead Guest Details</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div formArrayName="guests">
+            <div *ngFor="let guest of guestsArray.controls; let i = index" [formGroupName]="i" class="guest-form">
+              <div class="guest-fields">
+                <mat-form-field appearance="outline">
+                  <mat-label>Title</mat-label>
+                  <mat-select formControlName="title">
+                    <mat-option *ngFor="let t of titles" [value]="t">{{ t }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="flex-1">
+                  <mat-label>First Name</mat-label>
+                  <input matInput formControlName="firstName" placeholder="First name" />
+                  <mat-error *ngIf="guest.get('firstName')?.hasError('required')">Required</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="flex-1">
+                  <mat-label>Last Name</mat-label>
+                  <input matInput formControlName="lastName" placeholder="Last name" />
+                  <mat-error *ngIf="guest.get('lastName')?.hasError('required')">Required</mat-error>
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+
+          <!-- Special Requests -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Special Requests (optional)</mat-label>
+            <textarea matInput formControlName="specialRequests" rows="3" placeholder="Any special requests..."></textarea>
+          </mat-form-field>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Right: Payment -->
+    <div class="checkout-right">
+      <!-- Credit Balance Card -->
+      <mat-card class="credit-card" *ngIf="creditBalance() as balance">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>account_balance_wallet</mat-icon>
+          <mat-card-title>Available Credit</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="credit-row">
+            <span>Credit Limit</span>
+            <strong>{{ balance.creditLimit | number:'1.0-0' }} AED</strong>
+          </div>
+          <div class="credit-row">
+            <span>Wallet Balance</span>
+            <strong>{{ balance.walletBalance | number:'1.0-0' }} AED</strong>
+          </div>
+          <div class="credit-row available">
+            <span>Available</span>
+            <strong class="available-amount">{{ balance.availableCredit | number:'1.0-0' }} AED</strong>
+          </div>
+
+          <div class="insufficient-warning" *ngIf="!canPayWithCredit()">
+            <mat-icon>warning</mat-icon>
+            <span>Insufficient credit. Total required: {{ totalAmount() | number:'1.2-2' }} AED</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Payment Method -->
+      <mat-card class="payment-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>payment</mat-icon>
+          <mat-card-title>Payment Method</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <mat-radio-group formControlName="paymentMethod" class="payment-radio-group">
+            <mat-radio-button value="credit">
+              <mat-icon>account_balance_wallet</mat-icon>
+              Pay with Credit
+            </mat-radio-button>
+            <mat-radio-button value="online">
+              <mat-icon>credit_card</mat-icon>
+              Pay Online
+            </mat-radio-button>
+          </mat-radio-group>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Policy Acknowledgment -->
+      <mat-card class="policy-card">
+        <mat-card-content>
+          <mat-checkbox formControlName="policyAcknowledged">
+            I acknowledge the cancellation policy and agree to the booking terms
+          </mat-checkbox>
+          <mat-error *ngIf="form.get('policyAcknowledged')?.hasError('required') && form.get('policyAcknowledged')?.touched">
+            Please acknowledge the policy
+          </mat-error>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Confirm Button -->
+      <button
+        mat-raised-button
+        color="primary"
+        class="confirm-btn full-width"
+        (click)="onSubmit()"
+        [disabled]="submitting() || (form.get('paymentMethod')?.value === 'credit' && !canPayWithCredit())">
+        <mat-spinner diameter="20" *ngIf="submitting()"></mat-spinner>
+        <mat-icon *ngIf="!submitting()">check_circle</mat-icon>
+        {{ submitting() ? 'Processing...' : 'Confirm Booking' }}
+      </button>
+    </div>
+  </div>
+</div>

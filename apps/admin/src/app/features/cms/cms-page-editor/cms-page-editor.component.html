@@ -1,0 +1,56 @@
+<div class="page-container">
+  <div class="page-header">
+    <a mat-icon-button routerLink="/cms/pages"><mat-icon>arrow_back</mat-icon></a>
+    <h1 class="page-title">{{ pageId ? 'Edit Page' : 'New Page' }}</h1>
+  </div>
+
+  <div *ngIf="loading" class="loading-row"><mat-spinner diameter="48"></mat-spinner></div>
+
+  <mat-card *ngIf="!loading">
+    <mat-card-content>
+      <form [formGroup]="form" class="page-form">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Title</mat-label>
+          <input matInput formControlName="title">
+          <mat-error>Title is required</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Slug</mat-label>
+          <input matInput formControlName="slug">
+          <mat-hint>URL slug, e.g. "about-us"</mat-hint>
+          <mat-error>Slug is required</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Body Content</mat-label>
+          <textarea matInput formControlName="body" rows="12"></textarea>
+          <mat-hint>TinyMCE rich text editor integration coming soon — use HTML markup for now</mat-hint>
+          <mat-error>Body is required</mat-error>
+        </mat-form-field>
+
+        <div class="meta-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Meta Title</mat-label>
+            <input matInput formControlName="metaTitle">
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Meta Description</mat-label>
+            <input matInput formControlName="metaDescription">
+          </mat-form-field>
+        </div>
+
+        <div class="toggle-row">
+          <mat-slide-toggle formControlName="isPublished" color="primary">Published</mat-slide-toggle>
+        </div>
+
+        <div class="button-row">
+          <button mat-button routerLink="/cms/pages">Cancel</button>
+          <button mat-flat-button color="primary" (click)="save()" [disabled]="form.invalid || saving">
+            {{ saving ? 'Saving...' : 'Save Page' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

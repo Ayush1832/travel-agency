@@ -1,0 +1,95 @@
+<div class="page-container" *ngIf="!loading(); else loadingTpl">
+  <button mat-stroked-button (click)="goBack()" class="back-btn">
+    <mat-icon>arrow_back</mat-icon> Back to Tickets
+  </button>
+
+  <ng-container *ngIf="ticket() as t">
+    <!-- Ticket Meta -->
+    <mat-card class="meta-card">
+      <mat-card-content>
+        <div class="meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">Ticket #</span>
+            <strong>{{ t.ticketNumber }}</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Status</span>
+            <span class="status-badge" [ngClass]="getStatusClass(t.status)">{{ t.status | titlecase }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Category</span>
+            <strong>{{ t.category | titlecase }}</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Priority</span>
+            <strong>{{ t.priority | titlecase }}</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Created</span>
+            <strong>{{ t.createdAt | date:'medium' }}</strong>
+          </div>
+          <div class="meta-item" *ngIf="t.bookingRef">
+            <span class="meta-label">Booking Ref</span>
+            <strong>{{ t.bookingRef }}</strong>
+          </div>
+        </div>
+        <h2 class="ticket-subject">{{ t.subject }}</h2>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Messages Thread -->
+    <mat-card class="messages-card">
+      <mat-card-header>
+        <mat-card-title>Conversation</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="messages-thread">
+          <div *ngFor="let msg of t.messages"
+               class="message-bubble"
+               [ngClass]="msg.sender === 'client' ? 'msg-client' : 'msg-admin'">
+            <div class="msg-sender">
+              <mat-icon>{{ msg.sender === 'client' ? 'person' : 'support_agent' }}</mat-icon>
+              <span>{{ msg.sender === 'client' ? 'You' : 'Support Team' }}</span>
+              <span class="msg-time">{{ msg.createdAt | date:'short' }}</span>
+            </div>
+            <div class="msg-body">{{ msg.body }}</div>
+          </div>
+
+          <div *ngIf="t.messages.length === 0" class="no-messages">
+            <p>No messages yet</p>
+          </div>
+        </div>
+
+        <!-- Reply Box -->
+        <div class="reply-box" *ngIf="isOpen()">
+          <mat-divider></mat-divider>
+          <h4>Reply</h4>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Your message</mat-label>
+            <textarea matInput [formControl]="replyCtrl" rows="4" placeholder="Type your reply..."></textarea>
+            <mat-error *ngIf="replyCtrl.hasError('required')">Reply cannot be empty</mat-error>
+            <mat-error *ngIf="replyCtrl.hasError('minlength')">At least 5 characters</mat-error>
+          </mat-form-field>
+          <div class="reply-actions">
+            <button mat-raised-button color="primary" (click)="sendReply()" [disabled]="sending()">
+              <mat-spinner diameter="18" *ngIf="sending()"></mat-spinner>
+              <mat-icon *ngIf="!sending()">send</mat-icon>
+              {{ sending() ? 'Sending...' : 'Send Reply' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="closed-notice" *ngIf="!isOpen()">
+          <mat-icon>lock</mat-icon>
+          <span>This ticket is {{ t.status }}. You cannot reply to closed tickets.</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </ng-container>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="loading-center">
+    <mat-spinner></mat-spinner>
+  </div>
+</ng-template>

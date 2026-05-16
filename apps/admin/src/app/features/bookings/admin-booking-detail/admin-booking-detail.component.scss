@@ -1,0 +1,5 @@
+.page-title { font-size: 24px; font-weight: 600; color: #311b92; }
+.loading-row { display: flex; justify-content: center; padding: 60px; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; @media (max-width: 900px) { grid-template-columns: 1fr; } }
+.info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; font-size: 14px; .label { color: rgba(0,0,0,0.6); font-weight: 500; } .amount { font-weight: 700; color: #311b92; font-size: 18px; } }
+.action-row { display: flex; gap: 12px; align-items: center; }

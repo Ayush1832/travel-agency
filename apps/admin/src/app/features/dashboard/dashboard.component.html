@@ -1,0 +1,110 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">Dashboard</h1>
+  </div>
+
+  <div *ngIf="loading" class="loading-overlay">
+    <mat-spinner diameter="48"></mat-spinner>
+  </div>
+
+  <div *ngIf="!loading">
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+      <mat-card class="kpi-card kpi-clients">
+        <mat-card-content>
+          <div class="kpi-label">Active Clients</div>
+          <div class="kpi-value">{{ kpi.activeClients }}</div>
+          <div class="kpi-sub">
+            <span class="status-chip chip-pending" *ngIf="kpi.pendingClients > 0" (click)="goToClients()" style="cursor:pointer">
+              {{ kpi.pendingClients }} pending
+            </span>
+          </div>
+          <mat-icon class="kpi-icon">people</mat-icon>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="kpi-card kpi-bookings">
+        <mat-card-content>
+          <div class="kpi-label">Bookings This Month</div>
+          <div class="kpi-value">{{ kpi.bookingsThisMonth }}</div>
+          <div class="kpi-sub">Current month</div>
+          <mat-icon class="kpi-icon">book_online</mat-icon>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="kpi-card kpi-revenue">
+        <mat-card-content>
+          <div class="kpi-label">Revenue This Month</div>
+          <div class="kpi-value">{{ formatAed(kpi.revenueThisMonth) }}</div>
+          <div class="kpi-sub">AED</div>
+          <mat-icon class="kpi-icon">trending_up</mat-icon>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="kpi-card kpi-pending" (click)="goToClients()" style="cursor:pointer">
+        <mat-card-content>
+          <div class="kpi-label">Pending Approvals</div>
+          <div class="kpi-value">{{ kpi.pendingClients }}</div>
+          <div class="kpi-sub">
+            <a routerLink="/clients" style="color:#e65100">View clients →</a>
+          </div>
+          <mat-icon class="kpi-icon">pending_actions</mat-icon>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Trend bars -->
+    <mat-card class="trend-card" *ngIf="trendBars.length > 0">
+      <mat-card-header>
+        <mat-card-title>Booking Trend (Last 7 Days)</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="trend-chart">
+          <div class="trend-bar-wrap" *ngFor="let h of trendBars; let i = index">
+            <div class="trend-bar" [style.height.px]="h"></div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Pending Clients Table -->
+    <mat-card class="pending-table-card" *ngIf="pendingClients.length > 0">
+      <mat-card-header>
+        <mat-card-title>Pending Client Approvals</mat-card-title>
+        <div class="spacer"></div>
+        <a mat-button routerLink="/clients" color="primary">View All</a>
+      </mat-card-header>
+      <mat-card-content>
+        <table mat-table [dataSource]="pendingClients" class="full-width">
+          <ng-container matColumnDef="companyName">
+            <th mat-header-cell *matHeaderCellDef>Company</th>
+            <td mat-cell *matCellDef="let c">{{ c.companyName }}</td>
+          </ng-container>
+          <ng-container matColumnDef="email">
+            <th mat-header-cell *matHeaderCellDef>Email</th>
+            <td mat-cell *matCellDef="let c">{{ c.email }}</td>
+          </ng-container>
+          <ng-container matColumnDef="createdAt">
+            <th mat-header-cell *matHeaderCellDef>Registered</th>
+            <td mat-cell *matCellDef="let c">{{ c.createdAt | date:'mediumDate' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let c">
+              <button mat-flat-button color="primary" (click)="quickApprove(c)"
+                      [disabled]="approvingId === c._id" style="margin-right:8px">
+                Approve
+              </button>
+              <button mat-stroked-button color="warn" (click)="quickReject(c)"
+                      [disabled]="approvingId === c._id">
+                Reject
+              </button>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

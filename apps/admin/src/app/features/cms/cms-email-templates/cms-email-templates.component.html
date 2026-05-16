@@ -1,0 +1,43 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">Email Templates</h1>
+  </div>
+
+  <div *ngIf="loading" class="loading-row"><mat-spinner diameter="48"></mat-spinner></div>
+
+  <mat-accordion *ngIf="!loading">
+    <mat-expansion-panel *ngFor="let t of templates" [expanded]="expanded[t._id]">
+      <mat-expansion-panel-header>
+        <mat-panel-title>{{ t.name || t.key }}</mat-panel-title>
+        <mat-panel-description>{{ t.subject }}</mat-panel-description>
+      </mat-expansion-panel-header>
+
+      <div [formGroup]="forms[t._id]" class="template-form">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Subject</mat-label>
+          <input matInput formControlName="subject">
+        </mat-form-field>
+
+        <div class="variables-hint">
+          <strong>Available variables:</strong>
+          <code *ngFor="let v of getVariables(t)">{{ v }}</code>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Body (HTML supported)</mat-label>
+          <textarea matInput formControlName="body" rows="12"></textarea>
+        </mat-form-field>
+
+        <div class="save-row">
+          <button mat-flat-button color="primary" (click)="save(t)" [disabled]="saving[t._id]">
+            {{ saving[t._id] ? 'Saving...' : 'Save Template' }}
+          </button>
+        </div>
+      </div>
+    </mat-expansion-panel>
+  </mat-accordion>
+
+  <div *ngIf="!loading && templates.length === 0" class="empty-state">
+    <mat-icon>email</mat-icon><p>No email templates found</p>
+  </div>
+</div>

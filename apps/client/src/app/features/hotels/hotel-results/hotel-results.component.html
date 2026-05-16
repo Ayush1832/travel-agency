@@ -1,0 +1,122 @@
+<div class="page-container">
+  <div class="results-header">
+    <div>
+      <h2>{{ filteredResults().length }} Hotels Found</h2>
+      <button mat-stroked-button (click)="newSearch()">
+        <mat-icon>arrow_back</mat-icon> New Search
+      </button>
+    </div>
+    <mat-form-field appearance="outline" class="sort-select">
+      <mat-label>Sort by</mat-label>
+      <mat-select [value]="sortBy()" (valueChange)="sortBy.set($event)">
+        <mat-option value="price-asc">Price: Low to High</mat-option>
+        <mat-option value="price-desc">Price: High to Low</mat-option>
+        <mat-option value="star-rating">Star Rating</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div class="results-layout">
+    <!-- Sidebar Filters -->
+    <aside class="filters-sidebar">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Filters</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <!-- Price Range -->
+          <div class="filter-section">
+            <h4>Max Price (AED)</h4>
+            <input
+              type="range"
+              [min]="minPrice()"
+              [max]="maxPrice()"
+              [value]="filterMaxPrice()"
+              (input)="onMaxPriceChange($event)"
+              class="price-slider"
+            />
+            <div class="price-labels">
+              <span>{{ minPrice() | number:'1.0-0' }}</span>
+              <span>{{ filterMaxPrice() | number:'1.0-0' }}</span>
+            </div>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <!-- Star Rating -->
+          <div class="filter-section">
+            <h4>Star Rating</h4>
+            <div *ngFor="let star of stars" class="star-filter-row">
+              <mat-checkbox
+                [checked]="isStarSelected(star)"
+                (change)="toggleStar(star)">
+                <span class="star-icons">
+                  <mat-icon *ngFor="let s of getStarArray(star)" class="star-icon">star</mat-icon>
+                </span>
+              </mat-checkbox>
+            </div>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <!-- Refundable -->
+          <div class="filter-section">
+            <h4>Cancellation Policy</h4>
+            <mat-checkbox
+              [checked]="refundableOnly()"
+              (change)="refundableOnly.set($event.checked)">
+              Refundable only
+            </mat-checkbox>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </aside>
+
+    <!-- Results List -->
+    <div class="results-list">
+      <div *ngIf="loading()" class="loading-center">
+        <mat-spinner></mat-spinner>
+      </div>
+
+      <div *ngIf="!loading() && filteredResults().length === 0" class="empty-state">
+        <mat-icon class="empty-icon">hotel</mat-icon>
+        <h3>No hotels found</h3>
+        <p>Try adjusting your filters or search for a different destination</p>
+        <button mat-raised-button color="primary" (click)="newSearch()">New Search</button>
+      </div>
+
+      <mat-card *ngFor="let hotel of filteredResults()" class="hotel-card">
+        <div class="hotel-card-inner">
+          <div class="hotel-image">
+            <img
+              [src]="hotel.imageUrl || 'assets/hotel-placeholder.jpg'"
+              [alt]="hotel.name"
+              onerror="this.src='https://via.placeholder.com/200x150?text=Hotel'"
+            />
+          </div>
+          <div class="hotel-info">
+            <div class="hotel-top">
+              <h3 class="hotel-name">{{ hotel.name }}</h3>
+              <span class="refundable-badge" *ngIf="hotel.isRefundable">Refundable</span>
+            </div>
+            <div class="star-row">
+              <mat-icon *ngFor="let s of getStarArray(hotel.starRating)" class="star-icon-sm">star</mat-icon>
+            </div>
+            <p class="hotel-location">
+              <mat-icon class="location-icon">location_on</mat-icon>
+              {{ hotel.city }}, {{ hotel.country }}
+            </p>
+          </div>
+          <div class="hotel-price">
+            <div class="price-from">from</div>
+            <div class="price-value">{{ hotel.priceFrom | number:'1.0-0' }}</div>
+            <div class="price-currency">{{ hotel.currency }} / night</div>
+            <button mat-raised-button color="primary" (click)="viewDetails(hotel)" class="view-btn">
+              View Details
+            </button>
+          </div>
+        </div>
+      </mat-card>
+    </div>
+  </div>
+</div>

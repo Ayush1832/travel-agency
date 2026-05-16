@@ -1,0 +1,45 @@
+version: '3.9'
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: travel-b2b-mongo
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: travel-b2b
+
+  redis:
+    image: redis:7-alpine
+    container_name: travel-b2b-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  server:
+    build:
+      context: ../server
+      dockerfile: Dockerfile
+    container_name: travel-b2b-server
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    env_file:
+      - ../server/.env
+    environment:
+      MONGO_URI: mongodb://mongo:27017/travel-b2b
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - mongo
+      - redis
+
+volumes:
+  mongo_data:
+  redis_data:

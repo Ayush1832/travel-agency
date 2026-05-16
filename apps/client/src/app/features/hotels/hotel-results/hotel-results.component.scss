@@ -1,0 +1,220 @@
+.results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+
+  h2 {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .sort-select {
+    min-width: 200px;
+  }
+}
+
+.results-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+}
+
+.filters-sidebar {
+  mat-card {
+    position: sticky;
+    top: 80px;
+    border-radius: 12px;
+  }
+}
+
+.filter-section {
+  padding: 16px 0;
+
+  h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 12px;
+  }
+}
+
+.price-slider {
+  width: 100%;
+  accent-color: #3f51b5;
+}
+
+.price-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.star-filter-row {
+  margin-bottom: 8px;
+
+  .star-icons {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+.star-icon {
+  color: #ffc107;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.loading-center {
+  display: flex;
+  justify-content: center;
+  padding: 80px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px 24px;
+  color: #666;
+
+  .empty-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: #ccc;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+
+  p {
+    margin-bottom: 24px;
+  }
+}
+
+.hotel-card {
+  border-radius: 12px;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+
+  &:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  }
+}
+
+.hotel-card-inner {
+  display: flex;
+  gap: 0;
+}
+
+.hotel-image {
+  width: 200px;
+  min-height: 150px;
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.hotel-info {
+  flex: 1;
+  padding: 16px;
+
+  .hotel-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .hotel-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    flex: 1;
+  }
+}
+
+.refundable-badge {
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.star-row {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.star-icon-sm {
+  color: #ffc107;
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.hotel-location {
+  display: flex;
+  align-items: center;
+  color: #666;
+  font-size: 14px;
+  gap: 2px;
+
+  .location-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: #999;
+  }
+}
+
+.hotel-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+  min-width: 160px;
+  border-left: 1px solid #f0f0f0;
+
+  .price-from {
+    font-size: 12px;
+    color: #999;
+  }
+
+  .price-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #3f51b5;
+  }
+
+  .price-currency {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 16px;
+  }
+
+  .view-btn {
+    width: 100%;
+  }
+}

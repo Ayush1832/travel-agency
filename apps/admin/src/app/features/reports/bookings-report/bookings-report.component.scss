@@ -1,0 +1,11 @@
+.page-title { font-size: 24px; font-weight: 600; color: #311b92; }
+.date-card { margin-bottom: 24px; }
+.date-row { display: flex; gap: 16px; align-items: center; }
+.loading-row { display: flex; justify-content: center; padding: 60px; }
+.status-bars { padding: 8px 0; }
+.status-bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.status-label { width: 100px; font-size: 13px; text-transform: capitalize; }
+.bar-track { flex: 1; background: #f0f0f0; border-radius: 4px; height: 20px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+.bar-count { width: 100px; font-size: 13px; color: rgba(0,0,0,0.6); }
+.empty-state { text-align: center; padding: 40px; color: rgba(0,0,0,0.4); }

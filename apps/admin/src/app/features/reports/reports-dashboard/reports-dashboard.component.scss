@@ -1,0 +1,8 @@
+.page-title { font-size: 24px; font-weight: 600; color: #311b92; }
+.date-card { margin-bottom: 24px; }
+.date-row { display: flex; gap: 16px; }
+.reports-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; @media (max-width: 800px) { grid-template-columns: 1fr; } }
+.report-card { cursor: pointer; transition: box-shadow 0.2s; border-radius: 12px !important; text-align: center; &:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.15); } }
+.report-icon { font-size: 48px; width: 48px; height: 48px; color: #311b92; margin-bottom: 12px; }
+h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+p { color: rgba(0,0,0,0.6); font-size: 14px; }

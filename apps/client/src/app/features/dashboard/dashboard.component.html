@@ -1,0 +1,154 @@
+<div class="page-container">
+  <div class="dashboard-header">
+    <h1 class="welcome-title">Welcome back, {{ currentUser()?.firstName }}!</h1>
+    <p class="subtitle">Here's your business overview</p>
+  </div>
+
+  <div *ngIf="loading()" class="loading-center">
+    <mat-spinner diameter="48"></mat-spinner>
+  </div>
+
+  <div *ngIf="!loading()">
+    <!-- Stats Row -->
+    <div class="stats-grid gap-24">
+      <!-- Credit Card -->
+      <mat-card class="stat-card credit-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar class="card-icon credit-icon">account_balance_wallet</mat-icon>
+          <mat-card-title>Credit & Wallet</mat-card-title>
+          <mat-card-subtitle>AED</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="credit-row">
+            <span>Credit Limit</span>
+            <strong>{{ (creditBalance()?.creditLimit ?? 0) | number:'1.0-0' }} AED</strong>
+          </div>
+          <div class="credit-row">
+            <span>Wallet Balance</span>
+            <strong>{{ (creditBalance()?.walletBalance ?? 0) | number:'1.0-0' }} AED</strong>
+          </div>
+          <div class="credit-row highlight">
+            <span>Available</span>
+            <strong class="available-amount">{{ (creditBalance()?.availableCredit ?? 0) | number:'1.0-0' }} AED</strong>
+          </div>
+          <mat-progress-bar
+            mode="determinate"
+            [value]="creditUsagePercent"
+            color="accent"
+            class="credit-bar">
+          </mat-progress-bar>
+          <span class="usage-label">{{ creditUsagePercent }}% used</span>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Bookings Stats -->
+      <mat-card class="stat-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar class="card-icon booking-icon">book_online</mat-icon>
+          <mat-card-title>Bookings</mat-card-title>
+          <mat-card-subtitle>Overview</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="booking-stats">
+            <div class="booking-stat-item">
+              <span class="stat-number">{{ totalBookings() }}</span>
+              <span class="stat-label">Total</span>
+            </div>
+            <mat-divider [vertical]="true"></mat-divider>
+            <div class="booking-stat-item">
+              <span class="stat-number confirmed-count">{{ confirmedBookings() }}</span>
+              <span class="stat-label">Confirmed</span>
+            </div>
+            <mat-divider [vertical]="true"></mat-divider>
+            <div class="booking-stat-item">
+              <span class="stat-number month-count">{{ thisMonthBookings() }}</span>
+              <span class="stat-label">This Month</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Loyalty Points -->
+      <mat-card class="stat-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar class="card-icon loyalty-icon">stars</mat-icon>
+          <mat-card-title>Loyalty Points</mat-card-title>
+          <mat-card-subtitle>Rewards</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="loyalty-display">
+            <span class="loyalty-points">{{ loyaltyPoints() | number }}</span>
+            <span class="loyalty-label">points</span>
+            <span class="loyalty-value">≈ {{ (loyaltyPoints() * 0.01) | number:'1.2-2' }} AED value</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Quick Actions -->
+    <mat-card class="quick-actions-card">
+      <mat-card-header>
+        <mat-card-title>Quick Actions</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="actions-row">
+          <button mat-raised-button color="primary" (click)="navigateTo('/hotels')">
+            <mat-icon>search</mat-icon>
+            Search Hotels
+          </button>
+          <button mat-stroked-button color="primary" (click)="navigateTo('/bookings')">
+            <mat-icon>book_online</mat-icon>
+            View Bookings
+          </button>
+          <button mat-stroked-button color="primary" (click)="navigateTo('/wallet')">
+            <mat-icon>account_balance_wallet</mat-icon>
+            Wallet & Credit
+          </button>
+          <button mat-stroked-button (click)="navigateTo('/support')">
+            <mat-icon>support_agent</mat-icon>
+            Support
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Recent Bookings -->
+    <mat-card class="recent-bookings-card" *ngIf="recentBookings().length > 0">
+      <mat-card-header>
+        <mat-card-title>Recent Bookings</mat-card-title>
+        <button mat-button color="primary" (click)="navigateTo('/bookings')" style="margin-left: auto">
+          View All
+        </button>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-table [dataSource]="recentBookings()" class="full-width">
+          <ng-container matColumnDef="bookingRef">
+            <mat-header-cell *matHeaderCellDef>Ref #</mat-header-cell>
+            <mat-cell *matCellDef="let b">{{ b.bookingRef }}</mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="hotel">
+            <mat-header-cell *matHeaderCellDef>Hotel</mat-header-cell>
+            <mat-cell *matCellDef="let b">{{ b.hotelName }}</mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="checkIn">
+            <mat-header-cell *matHeaderCellDef>Check-in</mat-header-cell>
+            <mat-cell *matCellDef="let b">{{ b.checkIn | date:'mediumDate' }}</mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <mat-header-cell *matHeaderCellDef>Status</mat-header-cell>
+            <mat-cell *matCellDef="let b">
+              <span class="status-badge" [ngClass]="getStatusClass(b.status)">{{ b.status }}</span>
+            </mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="amount">
+            <mat-header-cell *matHeaderCellDef>Amount</mat-header-cell>
+            <mat-cell *matCellDef="let b">{{ b.totalAmount | number:'1.2-2' }} {{ b.currency }}</mat-cell>
+          </ng-container>
+
+          <mat-header-row *matHeaderRowDef="['bookingRef','hotel','checkIn','status','amount']"></mat-header-row>
+          <mat-row *matRowDef="let row; columns: ['bookingRef','hotel','checkIn','status','amount']"></mat-row>
+        </mat-table>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

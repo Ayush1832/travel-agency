@@ -1,0 +1,49 @@
+.page-title { font-size: 24px; font-weight: 600; color: #311b92; }
+.loading-row { display: flex; justify-content: center; padding: 60px; }
+.empty-state { text-align: center; padding: 24px; color: rgba(0,0,0,0.4); }
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+
+  @media (max-width: 900px) { grid-template-columns: 1fr; }
+}
+
+.full-width-card { grid-column: 1 / -1; }
+
+.info-card {
+  border-radius: 12px !important;
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    font-size: 14px;
+    .label { color: rgba(0,0,0,0.6); font-weight: 500; }
+  }
+}
+
+.credit-card {
+  border-radius: 12px !important;
+  .credit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .credit-item {
+    background: #f5f5f5;
+    padding: 16px;
+    border-radius: 8px;
+    .credit-label { font-size: 12px; color: rgba(0,0,0,0.6); text-transform: uppercase; }
+    .credit-value { font-size: 22px; font-weight: 700; color: #311b92; margin-top: 4px; }
+    .cur { font-size: 12px; color: rgba(0,0,0,0.5); }
+  }
+  .credit-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+}
+
+.actions-card {
+  border-radius: 12px !important;
+  .action-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
+}

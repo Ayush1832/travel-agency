@@ -1,0 +1,93 @@
+<div class="page-container">
+  <div class="page-header">
+    <h2>Support Tickets</h2>
+    <div class="header-actions">
+      <mat-form-field appearance="outline" class="status-select">
+        <mat-label>Filter by Status</mat-label>
+        <mat-select [value]="statusFilter()" (valueChange)="onStatusFilter($event)">
+          <mat-option value="">All</mat-option>
+          <mat-option value="open">Open</mat-option>
+          <mat-option value="in_progress">In Progress</mat-option>
+          <mat-option value="resolved">Resolved</mat-option>
+          <mat-option value="closed">Closed</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <button mat-raised-button color="primary" (click)="newTicket()">
+        <mat-icon>add</mat-icon>
+        New Ticket
+      </button>
+    </div>
+  </div>
+
+  <mat-card class="table-card">
+    <div *ngIf="loading()" class="loading-center">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+
+    <mat-table [dataSource]="tickets()" *ngIf="!loading()" class="full-width">
+      <ng-container matColumnDef="ticketNumber">
+        <mat-header-cell *matHeaderCellDef>Ticket #</mat-header-cell>
+        <mat-cell *matCellDef="let t"><strong>{{ t.ticketNumber }}</strong></mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="subject">
+        <mat-header-cell *matHeaderCellDef>Subject</mat-header-cell>
+        <mat-cell *matCellDef="let t">{{ t.subject }}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="category">
+        <mat-header-cell *matHeaderCellDef>Category</mat-header-cell>
+        <mat-cell *matCellDef="let t">{{ t.category | titlecase }}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <mat-header-cell *matHeaderCellDef>Status</mat-header-cell>
+        <mat-cell *matCellDef="let t">
+          <span class="status-badge" [ngClass]="getStatusClass(t.status)">{{ t.status | titlecase }}</span>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="priority">
+        <mat-header-cell *matHeaderCellDef>Priority</mat-header-cell>
+        <mat-cell *matCellDef="let t">
+          <span class="priority-badge" [ngClass]="getPriorityClass(t.priority)">{{ t.priority | titlecase }}</span>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="createdAt">
+        <mat-header-cell *matHeaderCellDef>Created</mat-header-cell>
+        <mat-cell *matCellDef="let t">{{ t.createdAt | date:'mediumDate' }}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <mat-header-cell *matHeaderCellDef></mat-header-cell>
+        <mat-cell *matCellDef="let t">
+          <button mat-icon-button (click)="viewTicket(t._id)" matTooltip="View">
+            <mat-icon>visibility</mat-icon>
+          </button>
+        </mat-cell>
+      </ng-container>
+
+      <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+      <mat-row
+        *matRowDef="let row; columns: displayedColumns"
+        (click)="viewTicket(row._id)"
+        class="clickable-row">
+      </mat-row>
+    </mat-table>
+
+    <div *ngIf="!loading() && tickets().length === 0" class="empty-state">
+      <mat-icon>support_agent</mat-icon>
+      <h3>No tickets yet</h3>
+      <button mat-raised-button color="primary" (click)="newTicket()">Create your first ticket</button>
+    </div>
+
+    <mat-paginator
+      [length]="total()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="[10, 25]"
+      (page)="onPage($event)"
+      *ngIf="total() > 0">
+    </mat-paginator>
+  </mat-card>
+</div>

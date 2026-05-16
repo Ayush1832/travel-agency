@@ -1,0 +1,53 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">CMS Pages</h1>
+    <button mat-flat-button color="primary" (click)="newPage()">
+      <mat-icon>add</mat-icon> New Page
+    </button>
+  </div>
+
+  <mat-card>
+    <div *ngIf="loading" class="loading-row"><mat-spinner diameter="36"></mat-spinner></div>
+    <table mat-table [dataSource]="pages" class="full-width" *ngIf="!loading">
+      <ng-container matColumnDef="title">
+        <th mat-header-cell *matHeaderCellDef>Title</th>
+        <td mat-cell *matCellDef="let p"><strong>{{ p.title }}</strong></td>
+      </ng-container>
+      <ng-container matColumnDef="slug">
+        <th mat-header-cell *matHeaderCellDef>Slug</th>
+        <td mat-cell *matCellDef="let p"><code>{{ p.slug }}</code></td>
+      </ng-container>
+      <ng-container matColumnDef="isPublished">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let p">
+          <span class="status-chip" [ngClass]="p.isPublished ? 'chip-active' : 'chip-pending'">
+            {{ p.isPublished ? 'Published' : 'Draft' }}
+          </span>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="updatedAt">
+        <th mat-header-cell *matHeaderCellDef>Last Updated</th>
+        <td mat-cell *matCellDef="let p">{{ p.updatedAt | date:'mediumDate' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let p">
+          <button mat-icon-button color="primary" (click)="editPage(p)" matTooltip="Edit">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button (click)="togglePublish(p)" [matTooltip]="p.isPublished ? 'Unpublish' : 'Publish'">
+            <mat-icon>{{ p.isPublished ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="deletePage(p)" matTooltip="Delete">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+    <div *ngIf="!loading && pages.length === 0" class="empty-state">
+      <mat-icon>web</mat-icon><p>No pages yet. Create your first page!</p>
+    </div>
+  </mat-card>
+</div>

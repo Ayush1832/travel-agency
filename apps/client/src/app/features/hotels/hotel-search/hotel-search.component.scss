@@ -1,0 +1,95 @@
+.search-hero {
+  text-align: center;
+  margin-bottom: 32px;
+
+  h1 {
+    font-size: 36px;
+    font-weight: 700;
+    color: #3f51b5;
+    margin-bottom: 8px;
+  }
+
+  p {
+    font-size: 16px;
+    color: #666;
+  }
+}
+
+.search-card {
+  border-radius: 16px;
+  padding: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.form-row {
+  margin-bottom: 16px;
+}
+
+.multi-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.rooms-section {
+  margin-bottom: 24px;
+}
+
+.rooms-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+  }
+}
+
+.rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.room-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+
+  mat-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    mat-card-title {
+      font-size: 14px;
+    }
+  }
+
+  .remove-room-btn {
+    margin-left: auto;
+  }
+}
+
+.room-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.submit-row {
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+.search-btn {
+  min-width: 200px;
+  height: 48px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

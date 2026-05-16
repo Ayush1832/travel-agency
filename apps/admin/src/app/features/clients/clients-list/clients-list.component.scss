@@ -1,0 +1,15 @@
+.page-title { font-size: 24px; font-weight: 600; color: #311b92; }
+
+.search-bar { padding: 16px 16px 0; }
+.search-field { width: 360px; }
+
+.loading-row { display: flex; justify-content: center; padding: 40px; }
+
+.table-wrap { overflow-x: auto; }
+
+.clickable-row { cursor: pointer; &:hover { background: #f5f5f5; } }
+
+.empty-state {
+  text-align: center; padding: 40px; color: rgba(0,0,0,0.4);
+  mat-icon { font-size: 48px; width: 48px; height: 48px; margin-bottom: 8px; }
+}
