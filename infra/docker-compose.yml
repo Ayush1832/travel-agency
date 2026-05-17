@@ -41,8 +41,8 @@ services:
 
   server:
     build:
-      context: ../server
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: server/Dockerfile
     container_name: travel-b2b-server
     restart: unless-stopped
     ports:
