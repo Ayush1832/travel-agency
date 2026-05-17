@@ -14,7 +14,7 @@
     "build:server": "npm run build --workspace=server",
     "lint": "eslint \"{server,apps,packages}/**/*.ts\" --fix",
     "format": "prettier --write \"{server,apps,packages}/**/*.{ts,html,scss,json}\"",
-    "prepare": "husky"
+    "prepare": "node -e \"try{require('husky')}catch(e){process.exit(0)}\" && husky || true"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
