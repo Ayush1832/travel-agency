@@ -46,14 +46,19 @@
         <mat-card-header>
           <mat-icon mat-card-avatar class="loyalty-avatar">stars</mat-icon>
           <mat-card-title>Loyalty Points</mat-card-title>
+          <mat-card-subtitle>1 point = {{ pointValueAed | number:'1.2-2' }} AED</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <div class="loyalty-display">
             <span class="loyalty-number">{{ loyaltyPoints() | number }}</span>
             <span class="loyalty-label">points</span>
-            <span class="loyalty-value">≈ {{ (loyaltyPoints() * 0.01) | number:'1.2-2' }} AED</span>
+            <span class="loyalty-value">≈ {{ (loyaltyPoints() * pointValueAed) | number:'1.2-2' }} AED</span>
           </div>
-          <button mat-raised-button color="accent" (click)="openRedeemDialog()" class="full-width">
+          <div class="expiry-notice" *ngIf="nextExpiryDate">
+            <mat-icon class="expiry-icon">schedule</mat-icon>
+            <span>Some points expire {{ nextExpiryDate | date:'mediumDate' }}</span>
+          </div>
+          <button mat-raised-button color="accent" (click)="openRedeemDialog()" class="full-width" style="margin-top:12px">
             <mat-icon>redeem</mat-icon>
             Redeem Points
           </button>
@@ -100,6 +105,9 @@
     <mat-card class="transactions-card">
       <mat-card-header>
         <mat-card-title>Transaction History</mat-card-title>
+        <button mat-stroked-button (click)="downloadStatement()" style="margin-left:auto; margin-right:8px" matTooltip="Download 90-day statement">
+          <mat-icon>download</mat-icon> Statement
+        </button>
         <mat-form-field appearance="outline" class="type-filter" style="margin-left: auto">
           <mat-label>Filter by Type</mat-label>
           <mat-select [value]="typeFilter()" (valueChange)="onTypeFilter($event)">

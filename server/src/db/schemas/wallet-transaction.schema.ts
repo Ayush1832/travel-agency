@@ -32,8 +32,8 @@ export class WalletTransaction {
   @Prop({ required: true })
   amount: number;
 
-  @Prop({ required: true })
-  balanceAfter: number;
+  @Prop()
+  balanceAfter?: number;
 
   @Prop({ type: Number })
   pointsAmount?: number;
@@ -53,6 +53,10 @@ export class WalletTransaction {
   @Prop()
   description?: string;
 
+  /** Expiry date for loyalty_earn transactions (null = never expires) */
+  @Prop({ type: Date })
+  expiresAt?: Date;
+
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   performedBy: Types.ObjectId;
 
@@ -64,3 +68,5 @@ export const WalletTransactionSchema = SchemaFactory.createForClass(WalletTransa
 
 WalletTransactionSchema.index({ companyId: 1, createdAt: -1 });
 WalletTransactionSchema.index({ type: 1 });
+WalletTransactionSchema.index({ refBookingId: 1 }, { sparse: true });
+WalletTransactionSchema.index({ refPaymentId: 1 }, { sparse: true });

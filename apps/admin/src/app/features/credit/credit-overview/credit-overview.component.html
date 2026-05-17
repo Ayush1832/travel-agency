@@ -1,33 +1,107 @@
 <div class="page-container">
   <div class="page-header">
-    <h1 class="page-title">Credit & Wallet Management</h1>
+    <h1 class="page-title">Credit & Outstanding Accounts</h1>
+    <button mat-stroked-button (click)="loadOutstanding()">
+      <mat-icon>refresh</mat-icon> Refresh
+    </button>
   </div>
 
-  <mat-card class="info-banner">
-    <mat-card-content>
-      <div class="info-content">
-        <mat-icon class="info-icon">info_outline</mat-icon>
-        <div>
-          <h3>Credit management is accessible from each client's detail page</h3>
-          <p>To manage credit limits, top up wallets, and record settlements, navigate to a specific client's profile.</p>
-          <a mat-flat-button color="primary" routerLink="/clients" style="margin-top:12px">
-            <mat-icon>people</mat-icon> Go to Clients
-          </a>
-        </div>
-      </div>
-    </mat-card-content>
-  </mat-card>
+  <div *ngIf="loading()" class="loading-center">
+    <mat-spinner></mat-spinner>
+  </div>
 
-  <mat-card style="margin-top: 24px">
-    <mat-card-header>
-      <mat-card-title>Outstanding Accounts</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <div class="empty-state">
-        <mat-icon>account_balance</mat-icon>
-        <p>Outstanding tracking is managed externally per current configuration.</p>
-        <p>Please refer to your accounting system for outstanding balance reports.</p>
-      </div>
-    </mat-card-content>
-  </mat-card>
+  <div *ngIf="error()" class="error-banner">
+    <mat-icon>error</mat-icon> {{ error() }}
+  </div>
+
+  <ng-container *ngIf="!loading() && !error()">
+    <!-- Summary Cards -->
+    <div class="summary-row">
+      <mat-card class="summary-card">
+        <mat-card-content>
+          <div class="summary-label">Total Outstanding (AED)</div>
+          <div class="summary-value">{{ formatAmount(totalOutstanding) }}</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="summary-card bucket-green-bg">
+        <mat-card-content>
+          <div class="summary-label">0–30 days</div>
+          <div class="summary-value">{{ bucket030.length }} accounts</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="summary-card bucket-yellow-bg">
+        <mat-card-content>
+          <div class="summary-label">31–60 days</div>
+          <div class="summary-value">{{ bucket3160.length }} accounts</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="summary-card bucket-orange-bg">
+        <mat-card-content>
+          <div class="summary-label">61–90 days</div>
+          <div class="summary-value">{{ bucket6190.length }} accounts</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="summary-card bucket-red-bg">
+        <mat-card-content>
+          <div class="summary-label">Over 90 days</div>
+          <div class="summary-value">{{ bucketOver90.length }} accounts</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Outstanding Table -->
+    <mat-card style="margin-top: 24px">
+      <mat-card-header>
+        <mat-card-title>Outstanding Accounts</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div *ngIf="entries().length === 0" class="empty-state">
+          <mat-icon>check_circle</mat-icon>
+          <p>No outstanding balances. All accounts are settled.</p>
+        </div>
+
+        <mat-table [dataSource]="entries()" *ngIf="entries().length > 0" class="full-width">
+          <ng-container matColumnDef="companyName">
+            <mat-header-cell *matHeaderCellDef>Company</mat-header-cell>
+            <mat-cell *matCellDef="let e">{{ e.companyName }}</mat-cell>
+          </ng-container>
+
+          <ng-container matColumnDef="outstandingBalance">
+            <mat-header-cell *matHeaderCellDef>Outstanding (AED)</mat-header-cell>
+            <mat-cell *matCellDef="let e">{{ formatAmount(e.outstandingBalance) }}</mat-cell>
+          </ng-container>
+
+          <ng-container matColumnDef="agingBucket">
+            <mat-header-cell *matHeaderCellDef>Aging</mat-header-cell>
+            <mat-cell *matCellDef="let e">
+              <span class="aging-chip" [ngClass]="getBucketClass(e.agingBucket)">{{ e.agingBucket }} days</span>
+            </mat-cell>
+          </ng-container>
+
+          <ng-container matColumnDef="lastBookingDate">
+            <mat-header-cell *matHeaderCellDef>Last Booking</mat-header-cell>
+            <mat-cell *matCellDef="let e">{{ (e.lastBookingDate | date:'mediumDate') || '—' }}</mat-cell>
+          </ng-container>
+
+          <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+          <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
+        </mat-table>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card style="margin-top: 24px">
+      <mat-card-content>
+        <div class="info-content">
+          <mat-icon class="info-icon">info_outline</mat-icon>
+          <div>
+            <h3>Credit limit and settlement management</h3>
+            <p>To adjust credit limits, record payments, or view full transaction history for a specific client, go to the client's detail page.</p>
+            <a mat-flat-button color="primary" routerLink="/clients" style="margin-top:12px">
+              <mat-icon>people</mat-icon> Go to Clients
+            </a>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </ng-container>
 </div>

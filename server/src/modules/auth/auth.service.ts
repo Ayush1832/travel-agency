@@ -16,6 +16,8 @@ import { Company, CompanyDocument, CompanyStatus } from '../../db/schemas/compan
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtPayload } from './strategies/jwt.strategy';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationChannel, NotificationType } from '../../db/schemas/notification.schema';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +26,7 @@ export class AuthService {
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     private jwtService: JwtService,
     private config: ConfigService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -67,6 +70,9 @@ export class AuthService {
     return { message: 'Registration submitted. Pending admin approval.' };
   }
 
+  private static readonly MAX_FAILED_ATTEMPTS = 5;
+  private static readonly LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+
   async login(dto: LoginDto, ip: string) {
     const user = await this.userModel
       .findOne({ email: dto.email.toLowerCase() })
@@ -76,8 +82,22 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('Invalid credentials');
     if (user.status !== UserStatus.ACTIVE) throw new ForbiddenException('Account is disabled');
 
+    // Account lockout check
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      const unlockAt = user.lockedUntil.toISOString();
+      throw new ForbiddenException(`Account temporarily locked due to too many failed attempts. Try again after ${unlockAt}`);
+    }
+
     const passwordMatch = await bcrypt.compare(dto.password, user.passwordHash);
-    if (!passwordMatch) throw new UnauthorizedException('Invalid credentials');
+    if (!passwordMatch) {
+      const newAttempts = (user.failedLoginAttempts ?? 0) + 1;
+      const update: Record<string, unknown> = { failedLoginAttempts: newAttempts };
+      if (newAttempts >= AuthService.MAX_FAILED_ATTEMPTS) {
+        update.lockedUntil = new Date(Date.now() + AuthService.LOCKOUT_DURATION_MS);
+      }
+      await this.userModel.updateOne({ _id: user._id }, update);
+      throw new UnauthorizedException('Invalid credentials');
+    }
 
     if (user.role === UserRole.CLIENT_OWNER) {
       const company = await this.companyModel.findById(user.companyId).lean();
@@ -100,7 +120,13 @@ export class AuthService {
     const refreshHash = await bcrypt.hash(tokens.refreshToken, rounds);
     await this.userModel.updateOne(
       { _id: user._id },
-      { refreshTokenHash: refreshHash, lastLoginAt: new Date(), lastLoginIp: ip },
+      {
+        refreshTokenHash: refreshHash,
+        lastLoginAt: new Date(),
+        lastLoginIp: ip,
+        failedLoginAttempts: 0,
+        $unset: { lockedUntil: '' },
+      },
     );
 
     return { ...tokens, user: this.sanitizeUser(user) };
@@ -149,7 +175,17 @@ export class AuthService {
       },
     );
 
-    // TODO: send email with rawToken via SES / SendGrid
+    const clientAppUrl = this.config.get<string>('clientAppUrl') ?? 'http://localhost:4200';
+    const resetLink = `${clientAppUrl}/auth/reset-password?token=${rawToken}`;
+
+    await this.notificationsService.send({
+      recipientUserId: user._id.toString(),
+      channel: NotificationChannel.EMAIL,
+      type: NotificationType.PASSWORD_RESET,
+      title: 'Password Reset Request',
+      message: `Click the link below to reset your password. This link expires in ${ttlMin} minutes.`,
+      data: { resetLink, ttlMin: String(ttlMin) },
+    }).catch(() => { /* non-blocking */ });
 
     return { message: 'If that email exists, a reset link has been sent.' };
   }

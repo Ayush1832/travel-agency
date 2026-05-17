@@ -106,6 +106,21 @@ export class BookingsListComponent implements OnInit {
     return status === 'confirmed' || status === 'pending';
   }
 
+  cancelBooking(id: string, event: Event) {
+    event.stopPropagation();
+    if (!confirm('Are you sure you want to cancel this booking?')) return;
+    this.bookingsService.cancelBooking(id, { reason: 'Cancelled by client' }).subscribe({
+      next: () => {
+        this.snackBar.open('Booking cancelled', 'Close', { duration: 3000 });
+        this.loadBookings();
+      },
+      error: (err) => {
+        const msg = err?.error?.message || 'Failed to cancel booking';
+        this.snackBar.open(msg, 'Close', { duration: 3000 });
+      },
+    });
+  }
+
   getStatusClass(status: string): string {
     return `status-${status}`;
   }

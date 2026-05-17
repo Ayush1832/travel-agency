@@ -1,24 +1,46 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
+import Redis from 'ioredis';
 import { TboService } from '../integrations/tbo/tbo.service';
 import { HotelSearchDto } from './dto/hotel-search.dto';
 import { NormalizedHotelResult, NormalizedHotelDetails, PrebookResult } from '../integrations/normalized.types';
 import { SearchCriteria } from '../integrations/normalized.types';
 
-interface CacheEntry<T> {
-  data: T;
-  expiresAt: number;
-}
+const CACHE_TTL_SECONDS = 300; // 5 minutes
 
 @Injectable()
-export class HotelsService {
+export class HotelsService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(HotelsService.name);
+  private redis: Redis | null = null;
 
-  // In-memory search cache with 5-minute TTL
-  private readonly searchCache = new Map<string, CacheEntry<NormalizedHotelResult[]>>();
-  private readonly CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+  constructor(
+    private readonly tboService: TboService,
+    private readonly config: ConfigService,
+  ) {}
 
-  constructor(private readonly tboService: TboService) {}
+  onModuleInit() {
+    try {
+      this.redis = new Redis({
+        host: this.config.get<string>('redis.host') ?? 'localhost',
+        port: this.config.get<number>('redis.port') ?? 6379,
+        password: this.config.get<string>('redis.password'),
+        keyPrefix: 'hotel_search:',
+        lazyConnect: true,
+        enableOfflineQueue: false,
+      });
+      this.redis.on('error', (err: Error) => {
+        this.logger.warn(`Redis error (falling back to no-cache): ${err.message}`);
+      });
+    } catch {
+      this.logger.warn('Redis init failed — hotel search cache disabled');
+      this.redis = null;
+    }
+  }
+
+  async onModuleDestroy() {
+    await this.redis?.quit();
+  }
 
   // ── Cache helpers ────────────────────────────────────────────────────────────
 
@@ -35,25 +57,24 @@ export class HotelsService {
     return crypto.createHash('sha256').update(key).digest('hex');
   }
 
-  private getFromCache(key: string): NormalizedHotelResult[] | null {
-    const entry = this.searchCache.get(key);
-    if (!entry) return null;
-    if (Date.now() > entry.expiresAt) {
-      this.searchCache.delete(key);
+  private async getFromCache(key: string): Promise<NormalizedHotelResult[] | null> {
+    if (!this.redis) return null;
+    try {
+      const raw = await this.redis.get(key);
+      if (!raw) return null;
+      return JSON.parse(raw) as NormalizedHotelResult[];
+    } catch {
       return null;
     }
-    return entry.data;
   }
 
-  private setInCache(key: string, data: NormalizedHotelResult[]): void {
-    // Purge expired entries periodically
-    if (this.searchCache.size > 500) {
-      const now = Date.now();
-      for (const [k, v] of this.searchCache.entries()) {
-        if (now > v.expiresAt) this.searchCache.delete(k);
-      }
+  private async setInCache(key: string, data: NormalizedHotelResult[]): Promise<void> {
+    if (!this.redis) return;
+    try {
+      await this.redis.set(key, JSON.stringify(data), 'EX', CACHE_TTL_SECONDS);
+    } catch {
+      // cache write failure is non-fatal
     }
-    this.searchCache.set(key, { data, expiresAt: Date.now() + this.CACHE_TTL_MS });
   }
 
   // ── Public methods ────────────────────────────────────────────────────────────
@@ -61,8 +82,7 @@ export class HotelsService {
   async search(dto: HotelSearchDto): Promise<{ searchId: string; hotels: NormalizedHotelResult[]; count: number }> {
     const searchId = this.hashSearchParams(dto);
 
-    // Try cache first
-    const cached = this.getFromCache(searchId);
+    const cached = await this.getFromCache(searchId);
     if (cached) {
       this.logger.log(`Cache HIT for searchId=${searchId}`);
       return { searchId, hotels: cached, count: cached.length };
@@ -85,7 +105,7 @@ export class HotelsService {
     };
 
     const hotels = await this.tboService.search(criteria);
-    this.setInCache(searchId, hotels);
+    await this.setInCache(searchId, hotels);
 
     return { searchId, hotels, count: hotels.length };
   }

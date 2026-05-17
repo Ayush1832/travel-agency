@@ -45,4 +45,12 @@ export class SupportService {
   reply(id: string, body: string): Observable<unknown> {
     return this.http.post(`${this.api}/${id}/reply`, { body });
   }
+
+  closeTicket(id: string): Observable<unknown> {
+    return this.http.patch(`${this.api}/${id}/close`, {});
+  }
+
+  reopenTicket(id: string): Observable<unknown> {
+    return this.http.patch(`${this.api}/${id}/reopen`, {});
+  }
 }

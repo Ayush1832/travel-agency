@@ -5,7 +5,7 @@ import { ClientsService } from '../../core/services/clients.service';
 import { AdminBookingsService } from '../../core/services/admin-bookings.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, timeout } from 'rxjs/operators';
 
 interface KpiData {
   activeClients: number;
@@ -49,10 +49,10 @@ export class DashboardComponent implements OnInit {
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     forkJoin({
-      revenue: this.reportsService.getRevenue(firstOfMonth, today).pipe(catchError(() => of(null))),
-      pending: this.clientsService.list({ status: 'pending', limit: 5 }).pipe(catchError(() => of(null))),
-      active: this.clientsService.list({ status: 'active', limit: 1 }).pipe(catchError(() => of(null))),
-      bookings: this.bookingsService.list({ from: firstOfMonth, to: today, limit: 1 }).pipe(catchError(() => of(null))),
+      revenue: this.reportsService.getRevenue(firstOfMonth, today).pipe(timeout(8000), catchError(() => of(null))),
+      pending: this.clientsService.list({ status: 'pending', limit: 5 }).pipe(timeout(8000), catchError(() => of(null))),
+      active: this.clientsService.list({ status: 'active', limit: 1 }).pipe(timeout(8000), catchError(() => of(null))),
+      bookings: this.bookingsService.list({ from: firstOfMonth, to: today, limit: 1 }).pipe(timeout(8000), catchError(() => of(null))),
     }).subscribe(({ revenue, pending, active, bookings }) => {
       if (revenue) {
         const r = (revenue as any).data;

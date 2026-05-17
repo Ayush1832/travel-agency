@@ -5,14 +5,17 @@ import {
   BadRequestException,
   HttpException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { InjectModel, InjectConnection } from '@nestjs/mongoose';
+import { Model, Types, Connection } from 'mongoose';
 // eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-var-requires
 const PDFDocument = require('pdfkit') as typeof import('pdfkit');
 import { Booking, BookingDocument, BookingStatus, BookingCurrency, BookingPaymentMethod, BookingSupplier, RefundStatus } from '../../db/schemas/booking.schema';
 import { BookingSequence, BookingSequenceDocument } from '../../db/schemas/booking-sequence.schema';
 import { ApiConfig, ApiConfigDocument } from '../../db/schemas/api-config.schema';
+import { WalletTransaction, WalletTransactionDocument, WalletTransactionType, WalletTransactionDirection } from '../../db/schemas/wallet-transaction.schema';
+import { LoyaltyRule, LoyaltyRuleDocument } from '../../db/schemas/loyalty-rule.schema';
 import { CompaniesService } from '../companies/companies.service';
+import { WalletService } from '../wallet/wallet.service';
 import { TboService } from '../integrations/tbo/tbo.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
@@ -23,10 +26,14 @@ export class BookingsService {
   private readonly logger = new Logger(BookingsService.name);
 
   constructor(
+    @InjectConnection() private readonly connection: Connection,
     @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
     @InjectModel(BookingSequence.name) private sequenceModel: Model<BookingSequenceDocument>,
     @InjectModel(ApiConfig.name) private apiConfigModel: Model<ApiConfigDocument>,
+    @InjectModel(WalletTransaction.name) private walletTxModel: Model<WalletTransactionDocument>,
+    @InjectModel(LoyaltyRule.name) private loyaltyRuleModel: Model<LoyaltyRuleDocument>,
     private readonly companiesService: CompaniesService,
+    private readonly walletService: WalletService,
     private readonly tboService: TboService,
   ) {}
 
@@ -68,15 +75,41 @@ export class BookingsService {
 
   // ── Loyalty points ───────────────────────────────────────────────────────────
 
-  private calcLoyaltyPoints(totalAmountMinorUnits: number, currency: string): number {
-    // 1 point per 1 AED spent (100 fils = 1 AED → 1 point per 100 minor units)
-    // For USD: use exchange rate approximation 1 USD ≈ 3.67 AED
-    if (currency === 'AED') {
-      return Math.floor(totalAmountMinorUnits / 100);
+  private async awardLoyaltyPoints(
+    companyId: string,
+    userId: string,
+    totalAmountFils: number,
+    currency: string,
+    hotelId: string | undefined,
+    bookingId: string,
+  ): Promise<void> {
+    try {
+      const rule = await this.loyaltyRuleModel.findOne({ isActive: true }).lean();
+      if (!rule) return;
+
+      // Hotel eligibility: if eligibleHotelIds is non-empty, hotel must be in the list
+      if (rule.eligibleHotelIds?.length && hotelId && !rule.eligibleHotelIds.includes(hotelId)) {
+        this.logger.log(`Hotel ${hotelId} not eligible for loyalty points`);
+        return;
+      }
+
+      // Convert to AED-equivalent fils for point calculation
+      const aedFils = currency === 'USD' ? Math.round(totalAmountFils * 3.67) : totalAmountFils;
+      const minAmountFils = (rule.minBookingAmountAed ?? 0) * 100;
+      if (aedFils < minAmountFils) return;
+
+      const points = WalletService.computeLoyaltyPoints(aedFils, rule.pointsPerAed);
+      if (points <= 0) return;
+
+      const expiresAt = rule.expirationPeriodDays > 0
+        ? new Date(Date.now() + rule.expirationPeriodDays * 24 * 60 * 60 * 1000)
+        : undefined;
+
+      await this.walletService.addLoyaltyPoints(companyId, userId, points, bookingId, expiresAt);
+      this.logger.log(`Awarded ${points} loyalty points to company ${companyId} for booking ${bookingId}`);
+    } catch (e) {
+      this.logger.warn(`Loyalty point award failed: ${(e as Error).message}`);
     }
-    // USD → AED conversion factor
-    const aedEquivalent = totalAmountMinorUnits * 3.67;
-    return Math.floor(aedEquivalent / 100);
   }
 
   // ── Create booking ────────────────────────────────────────────────────────────
@@ -89,135 +122,147 @@ export class BookingsService {
     const companyId = String(user.companyId ?? company._id);
     const userId = String(user._id);
 
-    // 1. Check credit availability for credit bookings
+    // ── Credit booking flow (ATOMIC) ──────────────────────────────────────────────
     if (dto.paymentMethod === 'credit') {
-      // Prebook to get final price
-      const prebook = await this.tboService.prebook(dto.prebookToken);
+      // Prebook to get final price (external call — outside transaction)
+      const prebook = await this.tboService.prebook(dto.roomToken);
       const baseAmount = prebook.finalPrice;
       const markupPct = await this.getMarkupPercent('tbo');
       const { total: totalAmount, markup: markupAmount } = this.applyMarkup(baseAmount, markupPct);
 
-      const available = await this.companiesService.getAvailableCredit(companyId);
-      if (available < totalAmount) {
-        throw new BadRequestException(
-          `Insufficient credit. Available: ${available}, Required: ${totalAmount}`,
-        );
-      }
+      // Validate dates from prebook
+      const checkIn = prebook.checkIn ? new Date(prebook.checkIn) : new Date();
+      const checkOut = prebook.checkOut ? new Date(prebook.checkOut) : new Date(checkIn.getTime() + 86400000);
+      const nights = this.calcNights(checkIn, checkOut);
 
-      // Deduct credit atomically
-      await this.companiesService.deductCredit(companyId, totalAmount);
+      // STEP 1: Atomically deduct credit — prevents race conditions where two parallel
+      // requests both pass the credit check. Uses conditional findOneAndUpdate.
+      await this.companiesService.atomicDeductCredit(companyId, totalAmount);
 
       // Map guests to supplier format
       const guestInfos: GuestInfo[] = dto.guests.map((g) => ({
         firstName: g.firstName,
         lastName: g.lastName,
         title: g.title,
-        adults: g.adults,
-        children: g.children,
+        adults: g.adults ?? 2,
+        children: g.children ?? 0,
       }));
 
-      // Call TBO book — CRITICAL: if this fails, rollback credit
+      // STEP 2: Call TBO book — external call, NOT inside transaction.
+      // If this fails, we must compensate (rollback outstanding increment).
       let bookResult;
       try {
         bookResult = await this.tboService.book(prebook.prebookToken, guestInfos);
       } catch (err) {
-        // COMPENSATING ACTION: rollback credit
+        // COMPENSATING ACTION: rollback the outstanding increment
         this.logger.error(
-          `TBO book() failed after credit deduction for company ${companyId}. Rolling back credit of ${totalAmount}`,
+          `[CRITICAL] TBO book() failed after credit deduction for company ${companyId}. Rolling back ${totalAmount} outstanding.`,
           (err as Error).message,
         );
         try {
           await this.companiesService.creditBack(companyId, totalAmount);
-          this.logger.log(`Credit rollback successful for company ${companyId}`);
+          this.logger.log(`[COMPENSATING] Credit rollback successful for company ${companyId}`);
         } catch (rollbackErr) {
           this.logger.error(
-            `CRITICAL: Credit rollback FAILED for company ${companyId}. Manual intervention required!`,
+            `[CRITICAL] Credit rollback FAILED for company ${companyId}. Manual intervention required! Amount: ${totalAmount}`,
             (rollbackErr as Error).message,
           );
         }
-        throw new HttpException(
-          'Booking failed at supplier level. Credit has been refunded.',
-          502,
-        );
+        throw new HttpException('Booking failed at supplier level. Credit has been refunded.', 502);
       }
 
       if (!bookResult.confirmed) {
-        // Book returned but not confirmed — rollback credit
         await this.companiesService.creditBack(companyId, totalAmount);
         throw new BadRequestException('Booking was not confirmed by supplier. Credit refunded.');
       }
 
-      // Build and save booking
-      const bookingRef = await this.generateBookingRef();
-      const checkIn = new Date(prebook.hotel ? `${new Date().toISOString().split('T')[0]}` : new Date().toISOString());
-      const checkOut = new Date(checkIn.getTime() + 24 * 60 * 60 * 1000);
-      const nights = this.calcNights(checkIn, checkOut);
-
-      const rooms = dto.guests.map((g) => ({
-        roomType: prebook.room.roomType,
-        mealPlan: prebook.room.mealPlan,
-        refundable: prebook.room.refundable,
-        cancellationPolicy: prebook.room.cancellationPolicy,
-        adults: g.adults,
-        children: g.children,
-        childrenAges: [],
-        leadGuest: { firstName: g.firstName, lastName: g.lastName, title: g.title },
-        guests: [],
-      }));
-
-      const booking = new this.bookingModel({
-        bookingRef,
-        companyId: new Types.ObjectId(companyId),
-        bookedByUserId: new Types.ObjectId(userId),
-        supplier: BookingSupplier.TBO,
-        supplierBookingRef: bookResult.supplierBookingRef,
-        hotel: {
-          supplierHotelId: bookResult.hotel.supplierHotelId || prebook.hotel.supplierHotelId,
-          name: bookResult.hotel.name || prebook.hotel.name,
-          address: bookResult.hotel.address || prebook.hotel.address,
-          city: bookResult.hotel.city,
-          country: bookResult.hotel.country,
-          starRating: bookResult.hotel.starRating || prebook.hotel.starRating,
-          lat: bookResult.hotel.lat || prebook.hotel.lat,
-          lng: bookResult.hotel.lng || prebook.hotel.lng,
-          phone: bookResult.hotel.phone || '',
-          imageUrl: bookResult.hotel.imageUrl || prebook.hotel.imageUrl,
-        },
-        rooms,
-        checkIn,
-        checkOut,
-        nights,
-        currency: dto.currency as BookingCurrency,
-        baseAmount,
-        taxAmount: 0,
-        totalAmount,
-        markupAmount,
-        paymentMethod: BookingPaymentMethod.CREDIT,
-        status: BookingStatus.CONFIRMED,
-        specialRequests: dto.specialRequests ?? '',
-        apiRaw: { prebook, bookResult },
-      });
-
-      const saved = await booking.save();
-
-      // Track outstanding balance for credit bookings
+      // STEP 3: Persist booking + wallet ledger entry in a Mongo transaction
+      const session = await this.connection.startSession();
+      let saved: BookingDocument;
       try {
-        await this.companiesService.incrementOutstanding(companyId, totalAmount);
-      } catch {
-        this.logger.warn('Could not increment outstandingBalance — non-critical');
+        await session.withTransaction(async () => {
+          const bookingRef = await this.generateBookingRef();
+          const rooms = dto.guests.map((g) => ({
+            roomType: prebook.room.roomType,
+            mealPlan: prebook.room.mealPlan,
+            refundable: prebook.room.refundable,
+            cancellationPolicy: prebook.room.cancellationPolicy.map((p) => ({
+              from: new Date(p.from),
+              to: new Date(p.to),
+              amount: p.amount,
+            })),
+            adults: g.adults ?? 2,
+            children: g.children ?? 0,
+            childrenAges: [] as number[],
+            leadGuest: { firstName: g.firstName, lastName: g.lastName, title: g.title },
+            guests: [] as unknown[],
+          }));
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const [booking] = await (this.bookingModel as any).create(
+            [{
+              bookingRef,
+              companyId: new Types.ObjectId(companyId),
+              bookedByUserId: new Types.ObjectId(userId),
+              supplier: BookingSupplier.TBO,
+              supplierBookingRef: bookResult.supplierBookingRef,
+              hotel: {
+                supplierHotelId: bookResult.hotel.supplierHotelId || prebook.hotel.supplierHotelId,
+                name: bookResult.hotel.name || prebook.hotel.name,
+                address: bookResult.hotel.address || prebook.hotel.address,
+                city: bookResult.hotel.city,
+                country: bookResult.hotel.country,
+                starRating: bookResult.hotel.starRating || prebook.hotel.starRating,
+                lat: bookResult.hotel.lat || prebook.hotel.lat,
+                lng: bookResult.hotel.lng || prebook.hotel.lng,
+                phone: bookResult.hotel.phone || '',
+                imageUrl: bookResult.hotel.imageUrl || prebook.hotel.imageUrl,
+              },
+              rooms,
+              checkIn,
+              checkOut,
+              nights,
+              currency: (dto.currency ?? 'AED') as BookingCurrency,
+              baseAmount,
+              taxAmount: 0,
+              totalAmount,
+              markupAmount,
+              paymentMethod: BookingPaymentMethod.CREDIT,
+              status: BookingStatus.CONFIRMED,
+              specialRequests: dto.specialRequests ?? '',
+              apiRaw: { prebook, bookResult },
+            }],
+            { session },
+          );
+          saved = booking as BookingDocument;
+
+          // Wallet ledger entry: record the credit debit
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (this.walletTxModel as any).create(
+            [{
+              companyId: new Types.ObjectId(companyId),
+              type: WalletTransactionType.CREDIT_USE,
+              direction: WalletTransactionDirection.DEBIT,
+              amount: totalAmount,
+              description: `Booking ${bookingRef}`,
+              refBookingId: booking._id,
+              performedBy: new Types.ObjectId(userId),
+            }],
+            { session },
+          );
+        });
+      } finally {
+        await session.endSession();
       }
 
-      // Award loyalty points (best-effort)
-      const points = this.calcLoyaltyPoints(totalAmount, dto.currency);
-      if (points > 0) {
-        try {
-          await this.companiesService.addLoyaltyPoints(companyId, points);
-        } catch {
-          this.logger.warn('Loyalty point update failed — non-critical');
-        }
-      }
+      // Best-effort: loyalty points (non-critical, outside transaction)
+      void this.awardLoyaltyPoints(
+        companyId, userId, totalAmount, dto.currency ?? 'AED',
+        bookResult.hotel?.supplierHotelId || prebook.hotel?.supplierHotelId,
+        String(saved!._id),
+      );
 
-      return saved;
+      return saved!;
     }
 
     // ── Online payment flow ────────────────────────────────────────────────────
@@ -228,7 +273,7 @@ export class BookingsService {
       }
 
       // Prebook to get final price
-      const prebook = await this.tboService.prebook(dto.prebookToken);
+      const prebook = await this.tboService.prebook(dto.roomToken);
       const onlineBaseAmount = prebook.finalPrice;
       const onlineMarkupPct = await this.getMarkupPercent('tbo');
       const { total: totalAmount, markup: onlineMarkupAmount } = this.applyMarkup(onlineBaseAmount, onlineMarkupPct);
@@ -237,8 +282,8 @@ export class BookingsService {
         firstName: g.firstName,
         lastName: g.lastName,
         title: g.title,
-        adults: g.adults,
-        children: g.children,
+        adults: g.adults ?? 2,
+        children: g.children ?? 0,
       }));
 
       // Call TBO book — if fails, flag for refund
@@ -262,7 +307,7 @@ export class BookingsService {
           checkIn: new Date(),
           checkOut: new Date(),
           nights: 0,
-          currency: dto.currency as BookingCurrency,
+          currency: (dto.currency ?? 'AED') as BookingCurrency,
           baseAmount: totalAmount,
           taxAmount: 0,
           totalAmount,
@@ -280,72 +325,85 @@ export class BookingsService {
         throw new HttpException('Booking failed at supplier. Refund has been initiated.', 502);
       }
 
-      const bookingRef = await this.generateBookingRef();
-      const checkIn = new Date();
-      const checkOut = new Date(checkIn.getTime() + 24 * 60 * 60 * 1000);
+      const checkIn = prebook.checkIn ? new Date(prebook.checkIn) : new Date();
+      const checkOut = prebook.checkOut ? new Date(prebook.checkOut) : new Date(checkIn.getTime() + 86400000);
       const nights = this.calcNights(checkIn, checkOut);
 
       const rooms = dto.guests.map((g) => ({
         roomType: prebook.room.roomType,
         mealPlan: prebook.room.mealPlan,
         refundable: prebook.room.refundable,
-        cancellationPolicy: prebook.room.cancellationPolicy,
-        adults: g.adults,
-        children: g.children,
-        childrenAges: [],
+        cancellationPolicy: prebook.room.cancellationPolicy.map((p) => ({
+          from: new Date(p.from),
+          to: new Date(p.to),
+          amount: p.amount,
+        })),
+        adults: g.adults ?? 2,
+        children: g.children ?? 0,
+        childrenAges: [] as number[],
         leadGuest: { firstName: g.firstName, lastName: g.lastName, title: g.title },
-        guests: [],
+        guests: [] as unknown[],
       }));
 
-      const booking = new this.bookingModel({
-        bookingRef,
-        companyId: new Types.ObjectId(companyId),
-        bookedByUserId: new Types.ObjectId(userId),
-        supplier: BookingSupplier.TBO,
-        supplierBookingRef: bookResult.supplierBookingRef,
-        hotel: {
-          supplierHotelId: bookResult.hotel.supplierHotelId || prebook.hotel.supplierHotelId,
-          name: bookResult.hotel.name || prebook.hotel.name,
-          address: bookResult.hotel.address || prebook.hotel.address,
-          city: bookResult.hotel.city,
-          country: bookResult.hotel.country,
-          starRating: bookResult.hotel.starRating || prebook.hotel.starRating,
-          lat: bookResult.hotel.lat || prebook.hotel.lat,
-          lng: bookResult.hotel.lng || prebook.hotel.lng,
-          phone: bookResult.hotel.phone || '',
-          imageUrl: bookResult.hotel.imageUrl || prebook.hotel.imageUrl,
-        },
-        rooms,
-        checkIn,
-        checkOut,
-        nights,
-        currency: dto.currency as BookingCurrency,
-        baseAmount: onlineBaseAmount,
-        taxAmount: 0,
-        totalAmount,
-        markupAmount: onlineMarkupAmount,
-        paymentMethod: BookingPaymentMethod.ONLINE,
-        paymentId: new Types.ObjectId(dto.paymentId),
-        status: bookResult.confirmed ? BookingStatus.CONFIRMED : BookingStatus.FAILED,
-        specialRequests: dto.specialRequests ?? '',
-        apiRaw: { prebook, bookResult },
-      });
-
-      const saved = await booking.save();
-
-      // Award loyalty points for online payments (best-effort)
-      if (bookResult.confirmed) {
-        const pts = this.calcLoyaltyPoints(totalAmount, dto.currency);
-        if (pts > 0) {
-          try {
-            await this.companiesService.addLoyaltyPoints(companyId, pts);
-          } catch {
-            this.logger.warn('Loyalty point update failed — non-critical');
-          }
-        }
+      // Persist booking atomically
+      const onlineSession = await this.connection.startSession();
+      let onlineSaved: BookingDocument;
+      try {
+        await onlineSession.withTransaction(async () => {
+          const bookingRef = await this.generateBookingRef();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const [booking] = await (this.bookingModel as any).create(
+            [{
+              bookingRef,
+              companyId: new Types.ObjectId(companyId),
+              bookedByUserId: new Types.ObjectId(userId),
+              supplier: BookingSupplier.TBO,
+              supplierBookingRef: bookResult.supplierBookingRef,
+              hotel: {
+                supplierHotelId: bookResult.hotel.supplierHotelId || prebook.hotel.supplierHotelId,
+                name: bookResult.hotel.name || prebook.hotel.name,
+                address: bookResult.hotel.address || prebook.hotel.address,
+                city: bookResult.hotel.city,
+                country: bookResult.hotel.country,
+                starRating: bookResult.hotel.starRating || prebook.hotel.starRating,
+                lat: bookResult.hotel.lat || prebook.hotel.lat,
+                lng: bookResult.hotel.lng || prebook.hotel.lng,
+                phone: bookResult.hotel.phone || '',
+                imageUrl: bookResult.hotel.imageUrl || prebook.hotel.imageUrl,
+              },
+              rooms,
+              checkIn,
+              checkOut,
+              nights,
+              currency: (dto.currency ?? 'AED') as BookingCurrency,
+              baseAmount: onlineBaseAmount,
+              taxAmount: 0,
+              totalAmount,
+              markupAmount: onlineMarkupAmount,
+              paymentMethod: BookingPaymentMethod.ONLINE,
+              paymentId: new Types.ObjectId(dto.paymentId),
+              status: bookResult.confirmed ? BookingStatus.CONFIRMED : BookingStatus.FAILED,
+              specialRequests: dto.specialRequests ?? '',
+              apiRaw: { prebook, bookResult },
+            }],
+            { session: onlineSession },
+          );
+          onlineSaved = booking as BookingDocument;
+        });
+      } finally {
+        await onlineSession.endSession();
       }
 
-      return saved;
+      // Award loyalty points for online payments (best-effort, outside transaction)
+      if (bookResult.confirmed) {
+        void this.awardLoyaltyPoints(
+          companyId, userId, totalAmount, dto.currency ?? 'AED',
+          bookResult.hotel?.supplierHotelId || prebook.hotel?.supplierHotelId,
+          String(onlineSaved!._id),
+        );
+      }
+
+      return onlineSaved!;
     }
 
     throw new BadRequestException('Invalid payment method');
@@ -466,6 +524,16 @@ export class BookingsService {
           if (booking.cancellation) {
             (booking.cancellation as unknown as Record<string, unknown>).refundStatus = RefundStatus.PROCESSED;
           }
+          // Record the refund in the wallet ledger
+          await this.walletTxModel.create({
+            companyId: new Types.ObjectId(companyId),
+            type: WalletTransactionType.CREDIT_REFUND,
+            direction: WalletTransactionDirection.CREDIT,
+            amount: refundableAmount,
+            description: `Refund for cancelled booking ${booking.bookingRef}`,
+            refBookingId: booking._id,
+            performedBy: new Types.ObjectId(String(user._id)),
+          });
         } catch (err) {
           this.logger.error('Credit refund failed after cancel', (err as Error).message);
         }

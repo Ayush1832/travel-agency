@@ -62,6 +62,9 @@
           <button mat-icon-button (click)="downloadVoucher(b._id, $event)" matTooltip="Download Voucher" *ngIf="b.status === 'confirmed'">
             <mat-icon>download</mat-icon>
           </button>
+          <button mat-icon-button color="warn" (click)="cancelBooking(b._id, $event)" matTooltip="Cancel Booking" *ngIf="canCancel(b.status)">
+            <mat-icon>cancel</mat-icon>
+          </button>
         </mat-cell>
       </ng-container>
 

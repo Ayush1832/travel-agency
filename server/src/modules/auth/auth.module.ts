@@ -8,6 +8,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { User, UserSchema } from '../../db/schemas/user.schema';
 import { Company, CompanySchema } from '../../db/schemas/company.schema';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { Company, CompanySchema } from '../../db/schemas/company.schema';
       { name: User.name, schema: UserSchema },
       { name: Company.name, schema: CompanySchema },
     ]),
+    NotificationsModule,
   ],
   providers: [AuthService, JwtStrategy, JwtRefreshStrategy],
   controllers: [AuthController],

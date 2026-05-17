@@ -11,6 +11,18 @@ services:
       - mongo_data:/data/db
     environment:
       MONGO_INITDB_DATABASE: travel-b2b
+    # Single-node replica set is REQUIRED for multi-document Mongoose transactions.
+    command: ['--replSet', 'rs0', '--bind_ip_all']
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >
+          mongosh --quiet --eval
+          "try { rs.status().ok } catch(e) { rs.initiate({_id:'rs0',members:[{_id:0,host:'mongo:27017'}]}).ok }"
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 10s
 
   redis:
     image: redis:7-alpine
@@ -21,6 +33,11 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   server:
     build:
@@ -33,12 +50,14 @@ services:
     env_file:
       - ../server/.env
     environment:
-      MONGO_URI: mongodb://mongo:27017/travel-b2b
+      MONGO_URI: mongodb://mongo:27017/travel-b2b?replicaSet=rs0
       REDIS_HOST: redis
       REDIS_PORT: 6379
     depends_on:
-      - mongo
-      - redis
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   mongo_data:

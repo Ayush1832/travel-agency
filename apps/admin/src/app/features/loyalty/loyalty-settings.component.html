@@ -1,0 +1,148 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Loyalty Points Settings</h1>
+    <p class="subtitle">Configure how customers earn and redeem loyalty points</p>
+  </div>
+
+  <div *ngIf="loading" class="loading-state">
+    <mat-spinner [diameter]="40"></mat-spinner>
+  </div>
+
+  <div *ngIf="!loading" class="content-grid">
+    <!-- Rule Settings Card -->
+    <mat-card class="settings-card">
+      <mat-card-header>
+        <mat-card-title>Earning & Redemption Rules</mat-card-title>
+        <mat-card-subtitle>These settings apply to all new bookings</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="form" class="settings-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Rule Name</mat-label>
+            <input matInput formControlName="name" placeholder="e.g. Default Rule">
+          </mat-form-field>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Points per AED Spent</mat-label>
+              <input matInput type="number" formControlName="pointsPerAed" min="0" step="0.5">
+              <mat-hint>e.g. 2 = 2 points per AED</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Point Value (fils)</mat-label>
+              <input matInput type="number" formControlName="pointValueFils" min="1">
+              <mat-hint>{{ pointValueAed | number:'1.2-2' }} AED per point</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Min Booking Amount (AED)</mat-label>
+              <input matInput type="number" formControlName="minBookingAmountAed" min="0">
+              <mat-hint>Below this, no points are earned</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Points Expiry (days)</mat-label>
+              <input matInput type="number" formControlName="expirationPeriodDays" min="0">
+              <mat-hint>0 = never expire</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <mat-slide-toggle formControlName="isActive" color="primary">Rule Active</mat-slide-toggle>
+        </form>
+      </mat-card-content>
+      <mat-card-actions align="end">
+        <button mat-flat-button color="primary" (click)="save()" [disabled]="saving">
+          <mat-icon>save</mat-icon>
+          {{ saving ? 'Saving...' : 'Save Rule' }}
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <!-- Hotel Eligibility Card -->
+    <mat-card class="hotels-card" *ngIf="activeRule?._id">
+      <mat-card-header>
+        <mat-card-title>Hotel Eligibility</mat-card-title>
+        <mat-card-subtitle>
+          {{ (activeRule?.eligibleHotelIds?.length ?? 0) === 0
+            ? 'All hotels are eligible (no restrictions)'
+            : activeRule?.eligibleHotelIds?.length + ' hotel(s) restricted' }}
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <p class="info-text">
+          <mat-icon class="info-icon">info</mat-icon>
+          Leave empty to allow all hotels. Add hotel IDs below to restrict earning to specific hotels only.
+        </p>
+
+        <div class="add-hotel-row">
+          <mat-form-field appearance="outline" class="hotel-input">
+            <mat-label>TBO Hotel ID</mat-label>
+            <input matInput [(ngModel)]="newHotelId" placeholder="e.g. 123456" (keyup.enter)="addHotel()">
+          </mat-form-field>
+          <button mat-flat-button color="accent" (click)="addHotel()" [disabled]="!newHotelId || addingHotel">
+            <mat-icon>add</mat-icon> Add
+          </button>
+        </div>
+
+        <div *ngIf="(activeRule?.eligibleHotelIds?.length ?? 0) === 0" class="empty-hotels">
+          <mat-icon>hotel</mat-icon>
+          <span>No restrictions — all hotels earn points</span>
+        </div>
+
+        <mat-list *ngIf="(activeRule?.eligibleHotelIds?.length ?? 0) > 0" class="hotel-list">
+          <mat-list-item *ngFor="let hotelId of activeRule?.eligibleHotelIds">
+            <mat-icon matListItemIcon>hotel</mat-icon>
+            <span matListItemTitle>{{ hotelId }}</span>
+            <button mat-icon-button color="warn" (click)="removeHotel(hotelId)" matListItemMeta>
+              <mat-icon>delete</mat-icon>
+            </button>
+          </mat-list-item>
+        </mat-list>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Summary Card -->
+    <mat-card class="summary-card" *ngIf="activeRule">
+      <mat-card-header>
+        <mat-card-title>Current Rule Summary</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="summary-label">Points per AED</span>
+            <span class="summary-value">{{ activeRule.pointsPerAed }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">1 Point Value</span>
+            <span class="summary-value">{{ (activeRule.pointValueFils ?? 1) / 100 | number:'1.2-2' }} AED</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Min Booking</span>
+            <span class="summary-value">{{ activeRule.minBookingAmountAed ?? 0 }} AED</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Points Expire After</span>
+            <span class="summary-value">
+              {{ (activeRule.expirationPeriodDays ?? 0) === 0 ? 'Never' : (activeRule.expirationPeriodDays + ' days') }}
+            </span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Hotel Restriction</span>
+            <span class="summary-value">
+              {{ (activeRule.eligibleHotelIds?.length ?? 0) === 0 ? 'None (all hotels)' : activeRule.eligibleHotelIds?.length + ' hotels' }}
+            </span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Status</span>
+            <span class="summary-value" [class.active]="activeRule.isActive" [class.inactive]="!activeRule.isActive">
+              {{ activeRule.isActive ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

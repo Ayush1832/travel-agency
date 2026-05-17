@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
+import { SuperAdminGuard } from './core/guards/super-admin.guard';
 import { LayoutComponent } from './shared/components/layout/layout.component';
 
 const routes: Routes = [
@@ -20,7 +21,8 @@ const routes: Routes = [
       { path: 'reports', loadChildren: () => import('./features/reports/reports.module').then(m => m.ReportsModule) },
       { path: 'cms', loadChildren: () => import('./features/cms/cms.module').then(m => m.CmsModule) },
       { path: 'sub-admins', loadChildren: () => import('./features/sub-admins/sub-admins.module').then(m => m.SubAdminsModule) },
-      { path: 'api-settings', loadChildren: () => import('./features/api-settings/api-settings.module').then(m => m.ApiSettingsModule) },
+      { path: 'api-settings', canActivate: [SuperAdminGuard], loadChildren: () => import('./features/api-settings/api-settings.module').then(m => m.ApiSettingsModule) },
+      { path: 'loyalty', loadChildren: () => import('./features/loyalty/loyalty.module').then(m => m.LoyaltyModule) },
       { path: 'support', loadChildren: () => import('./features/support/support.module').then(m => m.SupportModule) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],

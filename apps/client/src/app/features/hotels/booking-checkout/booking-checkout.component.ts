@@ -20,6 +20,7 @@ export class BookingCheckoutComponent implements OnInit {
   creditBalance = signal<CreditBalance | null>(null);
   loading = signal(false);
   submitting = signal(false);
+  redeemingPoints = signal(false);
 
   selectedRoom = this.hotelsService.selectedRoom;
   hotelName = this.hotelsService.selectedHotelName;
@@ -45,6 +46,18 @@ export class BookingCheckoutComponent implements OnInit {
     if (!room) return 0;
     return room.price * this.nights();
   });
+
+  get loyaltyPoints(): number {
+    return this.creditBalance()?.loyaltyPoints ?? 0;
+  }
+
+  get pointValueAed(): number {
+    return (this.creditBalance()?.pointValueFils ?? 1) / 100;
+  }
+
+  get loyaltyValueAed(): number {
+    return this.loyaltyPoints * this.pointValueAed;
+  }
 
   titles = ['Mr', 'Mrs', 'Ms', 'Dr'];
 
@@ -77,6 +90,27 @@ export class BookingCheckoutComponent implements OnInit {
     });
   }
 
+  redeemLoyaltyPoints() {
+    const pts = this.loyaltyPoints;
+    if (pts === 0) {
+      this.snackBar.open('No loyalty points available', 'Close', { duration: 3000 });
+      return;
+    }
+    this.redeemingPoints.set(true);
+    this.walletService.redeemPoints(pts).subscribe({
+      next: () => {
+        this.snackBar.open(`${pts} points redeemed — wallet credited!`, 'Close', { duration: 3000 });
+        this.walletService.getBalance().subscribe({ next: (b) => this.creditBalance.set(b), error: () => {} });
+        this.redeemingPoints.set(false);
+      },
+      error: (err) => {
+        const msg = err?.error?.message || 'Redemption failed';
+        this.snackBar.open(msg, 'Close', { duration: 3000 });
+        this.redeemingPoints.set(false);
+      },
+    });
+  }
+
   get guestsArray(): FormArray {
     return this.form.get('guests') as FormArray;
   }
@@ -98,7 +132,6 @@ export class BookingCheckoutComponent implements OnInit {
 
     const val = this.form.value;
     const room = this.selectedRoom()!;
-    const searchId = this.hotelsService.lastSearchId();
 
     if (val.paymentMethod === 'credit' && !this.canPayWithCredit()) {
       this.snackBar.open('Insufficient credit balance', 'Close', { duration: 3000 });
@@ -109,7 +142,6 @@ export class BookingCheckoutComponent implements OnInit {
 
     const dto = {
       roomToken: room.roomToken,
-      searchId,
       guests: val.guests,
       specialRequests: val.specialRequests,
       paymentMethod: val.paymentMethod,
@@ -132,7 +164,6 @@ export class BookingCheckoutComponent implements OnInit {
       this.http
         .post<{ data: { paymentUrl: string } }>(`${environment.apiUrl}/payments/create-order`, {
           roomToken: room.roomToken,
-          searchId,
           guests: val.guests,
           specialRequests: val.specialRequests,
         })

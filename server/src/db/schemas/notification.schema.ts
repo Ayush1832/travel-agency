@@ -19,6 +19,7 @@ export enum NotificationType {
   ACCOUNT_APPROVED = 'account_approved',
   ACCOUNT_SUSPENDED = 'account_suspended',
   LOYALTY_EARNED = 'loyalty_earned',
+  PASSWORD_RESET = 'password_reset',
 }
 
 export enum NotificationStatus {

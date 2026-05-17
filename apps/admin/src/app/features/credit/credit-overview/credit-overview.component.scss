@@ -1,5 +1,21 @@
 .page-title { font-size: 24px; font-weight: 600; color: #311b92; }
-.info-banner { border-left: 4px solid #311b92; }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
 .info-content { display: flex; gap: 16px; align-items: flex-start; }
 .info-icon { font-size: 32px; width: 32px; height: 32px; color: #311b92; margin-top: 4px; }
 .empty-state { text-align: center; padding: 40px; color: rgba(0,0,0,0.4); mat-icon { font-size: 48px; width: 48px; height: 48px; display: block; margin: 0 auto 8px; } }
+.loading-center { display: flex; justify-content: center; padding: 48px; }
+.error-banner { color: #c62828; padding: 16px; display: flex; align-items: center; gap: 8px; }
+.summary-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin-bottom: 8px; }
+.summary-card { text-align: center; }
+.summary-label { font-size: 13px; color: rgba(0,0,0,0.54); margin-bottom: 4px; }
+.summary-value { font-size: 22px; font-weight: 700; }
+.bucket-green-bg { border-top: 4px solid #388e3c; }
+.bucket-yellow-bg { border-top: 4px solid #f9a825; }
+.bucket-orange-bg { border-top: 4px solid #ef6c00; }
+.bucket-red-bg { border-top: 4px solid #c62828; }
+.aging-chip { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+.bucket-green { background: #e8f5e9; color: #388e3c; }
+.bucket-yellow { background: #fff8e1; color: #f9a825; }
+.bucket-orange { background: #fff3e0; color: #ef6c00; }
+.bucket-red { background: #ffebee; color: #c62828; }
+.full-width { width: 100%; }

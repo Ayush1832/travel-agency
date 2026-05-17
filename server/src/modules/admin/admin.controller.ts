@@ -35,6 +35,7 @@ import {
   UpdateApiConfigDto,
   CreateLoyaltyRuleDto,
   UpdateLoyaltyRuleDto,
+  AddEligibleHotelDto,
   AdminUpdateTicketDto,
   AdminReplyTicketDto,
 } from './dto/admin.dto';
@@ -322,63 +323,74 @@ export class AdminController {
     return this.adminService.resyncBooking(id, user.userId);
   }
 
-  // ── Roles ────────────────────────────────────────────────────────────────────
+  // ── Roles — super-admin only ─────────────────────────────────────────────────
 
   @Get('roles')
+  @Roles(UserRole.SUPER_ADMIN)
   listRoles() {
     return this.adminService.listRoles();
   }
 
   @Post('roles')
+  @Roles(UserRole.SUPER_ADMIN)
   createRole(@Body() dto: CreateRoleDto) {
     return this.adminService.createRole(dto);
   }
 
   @Patch('roles/:id')
+  @Roles(UserRole.SUPER_ADMIN)
   updateRole(@Param('id') id: string, @Body() dto: UpdateRoleDto) {
     return this.adminService.updateRole(id, dto);
   }
 
   @Delete('roles/:id')
+  @Roles(UserRole.SUPER_ADMIN)
   deleteRole(@Param('id') id: string) {
     return this.adminService.deleteRole(id);
   }
 
-  // ── Sub-Admins ───────────────────────────────────────────────────────────────
+  // ── Sub-Admins — super-admin only ─────────────────────────────────────────────
 
   @Get('sub-admins')
+  @Roles(UserRole.SUPER_ADMIN)
   listSubAdmins() {
     return this.adminService.listSubAdmins();
   }
 
   @Post('sub-admins')
+  @Roles(UserRole.SUPER_ADMIN)
   createSubAdmin(@Body() dto: CreateSubAdminDto) {
     return this.adminService.createSubAdmin(dto);
   }
 
   @Patch('sub-admins/:id')
+  @Roles(UserRole.SUPER_ADMIN)
   updateSubAdmin(@Param('id') id: string, @Body() dto: UpdateSubAdminDto) {
     return this.adminService.updateSubAdmin(id, dto);
   }
 
   @Patch('sub-admins/:id/disable')
+  @Roles(UserRole.SUPER_ADMIN)
   disableSubAdmin(@Param('id') id: string) {
     return this.adminService.disableSubAdmin(id);
   }
 
-  // ── API Integrations ─────────────────────────────────────────────────────────
+  // ── API Integrations — super-admin only ──────────────────────────────────────
 
   @Get('integrations')
+  @Roles(UserRole.SUPER_ADMIN)
   listConfigs() {
     return this.adminService.listConfigs();
   }
 
   @Patch('integrations/:provider')
+  @Roles(UserRole.SUPER_ADMIN)
   updateConfig(@Param('provider') provider: string, @Body() dto: UpdateApiConfigDto) {
     return this.adminService.updateConfig(provider, dto);
   }
 
   @Post('integrations/:provider/test')
+  @Roles(UserRole.SUPER_ADMIN)
   testConfig(@Param('provider') provider: string) {
     return this.adminService.testConfig(provider);
   }
@@ -398,6 +410,16 @@ export class AdminController {
   @Patch('loyalty-rules/:id')
   updateLoyaltyRule(@Param('id') id: string, @Body() dto: UpdateLoyaltyRuleDto) {
     return this.adminService.updateLoyaltyRule(id, dto);
+  }
+
+  @Post('loyalty-rules/:id/eligible-hotels')
+  addEligibleHotel(@Param('id') id: string, @Body() dto: AddEligibleHotelDto) {
+    return this.adminService.addEligibleHotel(id, dto);
+  }
+
+  @Delete('loyalty-rules/:id/eligible-hotels/:hotelId')
+  removeEligibleHotel(@Param('id') id: string, @Param('hotelId') hotelId: string) {
+    return this.adminService.removeEligibleHotel(id, hotelId);
   }
 
   // ── Admin Support ─────────────────────────────────────────────────────────────

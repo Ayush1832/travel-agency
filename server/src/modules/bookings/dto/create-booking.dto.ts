@@ -5,6 +5,7 @@ import {
   IsArray,
   ValidateNested,
   IsInt,
+  IsBoolean,
   Min,
   IsNotEmpty,
 } from 'class-validator';
@@ -23,19 +24,26 @@ export class GuestDto {
   @IsNotEmpty()
   title: string;
 
+  @IsOptional()
   @IsInt()
   @Min(1)
-  adults: number;
+  adults?: number;
 
+  @IsOptional()
   @IsInt()
   @Min(0)
-  children: number;
+  children?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isLead?: boolean;
 }
 
 export class CreateBookingDto {
+  /** Room booking code from hotel search (TBO BookingCode / roomToken) */
   @IsString()
   @IsNotEmpty()
-  prebookToken: string;
+  roomToken: string;
 
   @IsEnum(['online', 'credit'])
   paymentMethod: 'online' | 'credit';
@@ -53,6 +61,7 @@ export class CreateBookingDto {
   @IsString()
   specialRequests?: string;
 
+  @IsOptional()
   @IsEnum(['AED', 'USD'])
-  currency: 'AED' | 'USD';
+  currency?: 'AED' | 'USD';
 }

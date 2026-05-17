@@ -9,6 +9,16 @@
   </div>
 
   <div *ngIf="!loading()">
+    <!-- Outstanding Balance Warning -->
+    <div class="outstanding-warning" *ngIf="(creditBalance()?.usedCredit ?? 0) > 0 && creditUsagePercent >= 80">
+      <mat-icon>warning</mat-icon>
+      <span>
+        Your credit utilization is at <strong>{{ creditUsagePercent }}%</strong>.
+        Outstanding balance: <strong>{{ (creditBalance()?.usedCredit ?? 0) | number:'1.0-0' }} AED</strong>.
+        Please <a routerLink="/wallet">top up your wallet</a> to avoid booking disruptions.
+      </span>
+    </div>
+
     <!-- Stats Row -->
     <div class="stats-grid gap-24">
       <!-- Credit Card -->

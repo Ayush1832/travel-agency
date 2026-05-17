@@ -169,5 +169,8 @@ export const BookingSchema = SchemaFactory.createForClass(Booking);
 
 BookingSchema.index({ companyId: 1, createdAt: -1 });
 BookingSchema.index({ bookingRef: 1 }, { unique: true });
+BookingSchema.index({ companyId: 1, status: 1 });
 BookingSchema.index({ status: 1 });
 BookingSchema.index({ checkIn: 1 });
+BookingSchema.index({ supplierBookingRef: 1 }, { sparse: true });
+BookingSchema.index({ paymentId: 1 }, { sparse: true });

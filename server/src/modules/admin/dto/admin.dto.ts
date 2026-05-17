@@ -203,13 +203,23 @@ export class CreateLoyaltyRuleDto {
   pointsPerAed: number;
 
   @IsNumber()
-  @Min(0)
-  redemptionRate: number;
+  @Min(1)
+  pointValueFils: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
   minBookingAmountAed?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  expirationPeriodDays?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  eligibleHotelIds?: string[];
 
   @IsOptional()
   @IsBoolean()
@@ -228,8 +238,8 @@ export class UpdateLoyaltyRuleDto {
 
   @IsOptional()
   @IsNumber()
-  @Min(0)
-  redemptionRate?: number;
+  @Min(1)
+  pointValueFils?: number;
 
   @IsOptional()
   @IsNumber()
@@ -237,8 +247,24 @@ export class UpdateLoyaltyRuleDto {
   minBookingAmountAed?: number;
 
   @IsOptional()
+  @IsNumber()
+  @Min(0)
+  expirationPeriodDays?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  eligibleHotelIds?: string[];
+
+  @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+}
+
+export class AddEligibleHotelDto {
+  @IsString()
+  @IsNotEmpty()
+  hotelId: string;
 }
 
 // ── Admin Support DTOs ───────────────────────────────────────────────────────

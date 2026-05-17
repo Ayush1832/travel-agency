@@ -19,6 +19,7 @@ export class RegisterComponent {
     country: ['', Validators.required],
     postalCode: ['', Validators.required],
     currency: ['AED'],
+    taxId: [''],
     password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(72)]],
   });
 

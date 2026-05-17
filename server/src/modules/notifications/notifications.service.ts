@@ -249,6 +249,14 @@ export class NotificationsService {
    *   AWS_SES_SENDER_EMAIL  (verified sender address)
    *   AWS_REGION            (default: us-east-1)
    */
+  async directSendEmail(to: string, subject: string, html: string): Promise<void> {
+    return this.sendEmail(to, subject, html);
+  }
+
+  async directSendSms(to: string, body: string): Promise<void> {
+    return this.sendSms(to, body);
+  }
+
   private async sendEmail(to: string, subject: string, html: string): Promise<void> {
     const accessKeyId = this.config.get<string>('AWS_ACCESS_KEY_ID');
     const secretKey = this.config.get<string>('AWS_SECRET_ACCESS_KEY');

@@ -12,13 +12,21 @@ export class LoyaltyRule {
   @Prop({ required: true })
   pointsPerAed: number;
 
-  /** AED per point for redemption (e.g. 0.01 = 1 fil per point) */
-  @Prop({ required: true })
-  redemptionRate: number;
+  /** Fils credited to wallet per point redeemed (e.g. 100 = 1 AED per point) */
+  @Prop({ required: true, default: 1 })
+  pointValueFils: number;
 
   /** Minimum booking amount in AED to earn points */
   @Prop({ default: 0 })
   minBookingAmountAed: number;
+
+  /** How many days earned points are valid before expiry (0 = never expire) */
+  @Prop({ required: true, default: 0 })
+  expirationPeriodDays: number;
+
+  /** TBO hotel IDs eligible for point earning (empty = all hotels eligible) */
+  @Prop({ type: [String], default: [] })
+  eligibleHotelIds: string[];
 
   @Prop({ default: true })
   isActive: boolean;

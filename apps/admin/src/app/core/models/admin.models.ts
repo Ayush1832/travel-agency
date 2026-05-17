@@ -65,5 +65,11 @@ export interface LoyaltyRule {
   _id: string;
   name: string;
   pointsPerAed: number;
+  pointValueFils: number;
+  minBookingAmountAed: number;
+  expirationPeriodDays: number;
+  eligibleHotelIds: string[];
   isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }

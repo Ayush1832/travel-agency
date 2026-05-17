@@ -13,16 +13,12 @@ import {
 } from '../../db/schemas/wallet-transaction.schema';
 import { Settlement, SettlementDocument } from '../../db/schemas/settlement.schema';
 import { Company, CompanyDocument } from '../../db/schemas/company.schema';
+import { LoyaltyRule, LoyaltyRuleDocument } from '../../db/schemas/loyalty-rule.schema';
 import { CompaniesService } from '../companies/companies.service';
 import { PaymentsService } from '../payments/payments.service';
 import type { AuthUser } from '../../common/types/auth-user.types';
 import { PaymentType } from '../../db/schemas/payment.schema';
 import { CreateOrderDto } from '../payments/dto/create-order.dto';
-
-/** 1 loyalty point = 0.01 AED = 1 fil (minor unit) */
-const POINT_VALUE_FILS = 1;
-/** 1 AED spent (100 fils) = 1 loyalty point */
-const FILS_PER_POINT = 100;
 
 @Injectable()
 export class WalletService {
@@ -35,20 +31,41 @@ export class WalletService {
     private readonly settlementModel: Model<SettlementDocument>,
     @InjectModel(Company.name)
     private readonly companyModel: Model<CompanyDocument>,
+    @InjectModel(LoyaltyRule.name)
+    private readonly loyaltyRuleModel: Model<LoyaltyRuleDocument>,
     private readonly companiesService: CompaniesService,
     private readonly paymentsService: PaymentsService,
   ) {}
 
   /**
-   * Get current wallet balance for a company.
+   * Get current wallet balance for a company, including loyalty expiry info.
    */
   async getBalance(companyId: string) {
     const company = await this.companiesService.findById(companyId);
+    const availableCredit = Math.max(0, company.creditLimit + company.walletBalance - company.outstandingBalance);
+
+    const rule = await this.loyaltyRuleModel.findOne({ isActive: true }).lean();
+    const pointValueFils = rule?.pointValueFils ?? 1;
+
+    // Find next expiry batch — earliest non-expired loyalty_earn transaction
+    const now = new Date();
+    const nextExpiryTx = await this.txModel
+      .findOne({
+        companyId: new Types.ObjectId(companyId),
+        type: WalletTransactionType.LOYALTY_EARN,
+        expiresAt: { $gt: now },
+      })
+      .sort({ expiresAt: 1 })
+      .lean();
+
     return {
       creditLimit: company.creditLimit,
       walletBalance: company.walletBalance,
-      availableCredit: company.creditLimit + company.walletBalance,
+      outstandingBalance: company.outstandingBalance,
+      availableCredit,
       loyaltyPoints: company.loyaltyPoints,
+      pointValueFils,
+      nextExpiryDate: nextExpiryTx?.expiresAt ?? null,
       currency: company.currency,
     };
   }
@@ -253,14 +270,15 @@ export class WalletService {
   }
 
   /**
-   * Award loyalty points to a company (1 point per AED = per 100 fils spent).
-   * Also creates a WalletTransaction record.
+   * Award loyalty points using the active rule's settings.
+   * Stores expiresAt on the transaction if the rule has an expiration period.
    */
   async addLoyaltyPoints(
     companyId: string,
     userId: string,
     pointsToAdd: number,
     bookingId?: string,
+    expiresAt?: Date,
   ) {
     const company = await this.companyModel.findByIdAndUpdate(
       companyId,
@@ -270,27 +288,30 @@ export class WalletService {
 
     if (!company) throw new BadRequestException('Company not found');
 
+    const rule = await this.loyaltyRuleModel.findOne({ isActive: true }).lean();
+    const pointValueFils = rule?.pointValueFils ?? 1;
     const newPointsBalance = company.loyaltyPoints;
 
-    await this.recordTransaction({
-      companyId,
+    const tx = new this.txModel({
+      companyId: new Types.ObjectId(companyId),
       type: WalletTransactionType.LOYALTY_EARN,
       direction: WalletTransactionDirection.CREDIT,
-      amount: pointsToAdd * POINT_VALUE_FILS,
+      amount: pointsToAdd * pointValueFils,
       balanceAfter: company.walletBalance,
       pointsAmount: pointsToAdd,
       pointsBalanceAfter: newPointsBalance,
-      refBookingId: bookingId,
+      refBookingId: bookingId ? new Types.ObjectId(bookingId) : undefined,
       description: `Loyalty points earned: ${pointsToAdd} pts`,
-      performedBy: userId,
+      performedBy: new Types.ObjectId(userId),
+      expiresAt: expiresAt ?? null,
     });
+    await tx.save();
 
-    return { pointsAdded: pointsToAdd, newPointsBalance };
+    return { pointsAdded: pointsToAdd, newPointsBalance, expiresAt: expiresAt ?? null };
   }
 
   /**
-   * Redeem loyalty points — converts to wallet balance.
-   * 1 point = 1 fil (0.01 AED).
+   * Redeem loyalty points — converts to wallet balance using the active rule's pointValueFils.
    */
   async redeemLoyaltyPoints(companyId: string, userId: string, points: number) {
     const current = await this.companiesService.findById(companyId);
@@ -301,15 +322,16 @@ export class WalletService {
       );
     }
 
-    const aedEquivalentFils = points * POINT_VALUE_FILS;
+    const rule = await this.loyaltyRuleModel.findOne({ isActive: true }).lean();
+    const pointValueFils = rule?.pointValueFils ?? 1;
+    const walletCreditFils = points * pointValueFils;
 
-    // Deduct points and credit wallet atomically
     const updated = await this.companyModel.findByIdAndUpdate(
       companyId,
       {
         $inc: {
           loyaltyPoints: -points,
-          walletBalance: aedEquivalentFils,
+          walletBalance: walletCreditFils,
         },
       },
       { new: true },
@@ -324,27 +346,28 @@ export class WalletService {
       companyId,
       type: WalletTransactionType.LOYALTY_REDEEM,
       direction: WalletTransactionDirection.DEBIT,
-      amount: aedEquivalentFils,
+      amount: walletCreditFils,
       balanceAfter: newWalletBalance,
       pointsAmount: points,
       pointsBalanceAfter: newPointsBalance,
-      description: `Loyalty points redeemed: ${points} pts → ${aedEquivalentFils} fils`,
+      description: `Loyalty points redeemed: ${points} pts → ${walletCreditFils} fils`,
       performedBy: userId,
     });
 
     return {
       pointsRedeemed: points,
       newPointsBalance,
-      walletCredited: aedEquivalentFils,
+      walletCredited: walletCreditFils,
       newWalletBalance,
     };
   }
 
   /**
-   * Compute loyalty points to award for an AED amount (minor units/fils).
-   * 1 point per AED = 1 point per 100 fils.
+   * Compute loyalty points to award based on the active rule.
+   * Falls back to 1 pt per AED if no rule provided.
    */
-  static computeLoyaltyPoints(amountFils: number): number {
-    return Math.floor(amountFils / FILS_PER_POINT);
+  static computeLoyaltyPoints(amountFils: number, pointsPerAed = 1): number {
+    // amountFils / 100 = AED; multiply by pointsPerAed
+    return Math.floor((amountFils / 100) * pointsPerAed);
   }
 }

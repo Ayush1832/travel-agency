@@ -52,6 +52,10 @@ export class ClientsService {
     return this.http.post(`${this.api}/${id}/settlements`, dto);
   }
 
+  getOutstanding(): Observable<ApiResponse<unknown>> {
+    return this.http.get<ApiResponse<unknown>>(`${this.api}/outstanding`);
+  }
+
   getTransactions(id: string, params: { page?: number; limit?: number } = {}): Observable<PaginatedResponse<WalletTransaction>> {
     let httpParams = new HttpParams();
     if (params.page != null) httpParams = httpParams.set('page', params.page.toString());

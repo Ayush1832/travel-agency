@@ -76,12 +76,18 @@
               <mat-icon *ngIf="!sending()">send</mat-icon>
               {{ sending() ? 'Sending...' : 'Send Reply' }}
             </button>
+            <button mat-stroked-button color="warn" (click)="closeTicket()" style="margin-left:8px">
+              <mat-icon>close</mat-icon> Close Ticket
+            </button>
           </div>
         </div>
 
         <div class="closed-notice" *ngIf="!isOpen()">
           <mat-icon>lock</mat-icon>
           <span>This ticket is {{ t.status }}. You cannot reply to closed tickets.</span>
+          <button mat-stroked-button color="primary" (click)="reopenTicket()" *ngIf="isClosed()" style="margin-left:16px">
+            <mat-icon>refresh</mat-icon> Reopen Ticket
+          </button>
         </div>
       </mat-card-content>
     </mat-card>

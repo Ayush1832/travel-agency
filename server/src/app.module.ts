@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import configuration from './config/configuration';
+import { EncryptionModule } from './common/encryption/encryption.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { CompaniesModule } from './modules/companies/companies.module';
@@ -17,6 +18,7 @@ import { CmsModule } from './modules/cms/cms.module';
 import { SupportModule } from './modules/support/support.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { JobsModule } from './jobs/jobs.module';
 
 @Module({
   imports: [
@@ -40,6 +42,7 @@ import { AdminModule } from './modules/admin/admin.module';
     ]),
 
     // Foundation
+    EncryptionModule,
     AuthModule,
     UsersModule,
     CompaniesModule,
@@ -59,6 +62,7 @@ import { AdminModule } from './modules/admin/admin.module';
     SupportModule,
     ReportsModule,
     AdminModule,
+    JobsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

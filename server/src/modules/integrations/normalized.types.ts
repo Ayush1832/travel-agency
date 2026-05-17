@@ -62,6 +62,8 @@ export interface PrebookResult {
   /** Final price in minor units — may differ from search price */
   finalPrice: number;
   expiresAt: Date;
+  checkIn?: string; // YYYY-MM-DD
+  checkOut?: string; // YYYY-MM-DD
   hotel: {
     supplierHotelId: string;
     name: string;

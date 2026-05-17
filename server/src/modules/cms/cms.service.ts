@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import sanitizeHtml from 'sanitize-html';
 import { CmsPage, CmsPageDocument } from '../../db/schemas/cms-page.schema';
 import { CmsBanner, CmsBannerDocument } from '../../db/schemas/cms-banner.schema';
 import {
@@ -116,12 +117,29 @@ export class CmsService implements OnModuleInit {
     return this.pageModel.find().sort({ createdAt: -1 }).lean();
   }
 
+  private sanitizePageBody(body: string): string {
+    return sanitizeHtml(body, {
+      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'iframe']),
+      allowedAttributes: {
+        ...sanitizeHtml.defaults.allowedAttributes,
+        img: ['src', 'alt', 'width', 'height'],
+        iframe: ['src', 'width', 'height', 'allowfullscreen'],
+        '*': ['class', 'id', 'style'],
+      },
+      allowedSchemes: ['https', 'http', 'mailto'],
+    });
+  }
+
   async createPage(dto: CreatePageDto) {
-    return this.pageModel.create({ ...dto, slug: dto.slug.toLowerCase() });
+    const sanitized = { ...dto, slug: dto.slug.toLowerCase() };
+    if (sanitized.body) sanitized.body = this.sanitizePageBody(sanitized.body);
+    return this.pageModel.create(sanitized);
   }
 
   async updatePage(id: string, dto: UpdatePageDto) {
-    const page = await this.pageModel.findByIdAndUpdate(id, dto, { new: true });
+    const sanitized = { ...dto };
+    if (sanitized.body) sanitized.body = this.sanitizePageBody(sanitized.body);
+    const page = await this.pageModel.findByIdAndUpdate(id, sanitized, { new: true });
     if (!page) throw new NotFoundException('Page not found');
     return page;
   }

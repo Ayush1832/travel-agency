@@ -96,6 +96,9 @@
             <button mat-icon-button color="primary" (click)="viewBooking(b._id)" matTooltip="View Details">
               <mat-icon>visibility</mat-icon>
             </button>
+            <button mat-icon-button (click)="resync(b._id, $event)" matTooltip="Resync with Supplier" *ngIf="b.status === 'confirmed'">
+              <mat-icon>sync</mat-icon>
+            </button>
           </td>
         </ng-container>
 

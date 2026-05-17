@@ -83,6 +83,15 @@ mat-card {
   }
 }
 
+.expiry-notice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #e65100;
+  .expiry-icon { font-size: 14px; height: 14px; width: 14px; }
+}
+
 .transactions-card {
   margin-top: 0;
 

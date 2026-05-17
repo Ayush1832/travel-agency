@@ -105,6 +105,14 @@ export class AllBookingsListComponent implements OnInit {
     });
   }
 
+  resync(id: string, event: Event) {
+    event.stopPropagation();
+    this.bookingsService.resync(id).subscribe({
+      next: () => this.snackBar.open('Booking resynced', 'OK', { duration: 3000 }),
+      error: () => this.snackBar.open('Resync failed', 'OK', { duration: 3000 }),
+    });
+  }
+
   formatAed(fils: number): string {
     return (fils / 100).toLocaleString('en-AE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }

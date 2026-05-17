@@ -5,6 +5,8 @@ import { WalletService } from '../../core/services/wallet.service';
 import { BookingsService } from '../../core/services/bookings.service';
 import { CreditBalance } from '../../core/models/wallet.models';
 import { Booking } from '../../core/models/booking.models';
+import { timeout, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   standalone: false,
@@ -37,9 +39,12 @@ export class DashboardComponent implements OnInit {
   loadDashboardData() {
     this.loading.set(true);
 
-    this.walletService.getBalance().subscribe({
+    this.walletService.getBalance().pipe(
+      timeout(8000),
+      catchError(() => of(null)),
+    ).subscribe({
       next: (balance) => {
-        this.creditBalance.set(balance);
+        if (balance) this.creditBalance.set(balance);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),

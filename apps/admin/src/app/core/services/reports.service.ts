@@ -27,6 +27,16 @@ export class ReportsService {
     return this.http.get<ApiResponse<CreditReport>>(`${this.api}/credit`, { params });
   }
 
+  getApiUsage(from: string, to: string): Observable<ApiResponse<unknown>> {
+    const params = new HttpParams().set('from', from).set('to', to);
+    return this.http.get<ApiResponse<unknown>>(`${this.api}/api-usage`, { params });
+  }
+
+  getCancellationReport(from: string, to: string): Observable<ApiResponse<unknown>> {
+    const params = new HttpParams().set('from', from).set('to', to);
+    return this.http.get<ApiResponse<unknown>>(`${this.api}/cancellations`, { params });
+  }
+
   exportReport(type: string, format: string, params: any = {}): Observable<Blob> {
     let httpParams = new HttpParams().set('format', format);
     Object.keys(params).forEach(k => {

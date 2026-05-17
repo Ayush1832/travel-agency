@@ -2,7 +2,11 @@ export interface CreditBalance {
   creditLimit: number;
   walletBalance: number;
   availableCredit: number;
+  outstandingBalance: number;
   usedCredit: number;
+  loyaltyPoints: number;
+  pointValueFils: number;
+  nextExpiryDate: string | null;
   currency: string;
 }
 

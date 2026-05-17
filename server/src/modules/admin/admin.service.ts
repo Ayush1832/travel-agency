@@ -31,6 +31,7 @@ import {
   UpdateApiConfigDto,
   CreateLoyaltyRuleDto,
   UpdateLoyaltyRuleDto,
+  AddEligibleHotelDto,
 } from './dto/admin.dto';
 
 const SENSITIVE_KEYS = ['password', 'secret', 'apiKey', 'api_key', 'token', 'privateKey'];
@@ -65,8 +66,10 @@ export class AdminService implements OnModuleInit {
       await this.loyaltyRuleModel.create({
         name: 'Default Rule',
         pointsPerAed: 1,
-        redemptionRate: 0.01,
+        pointValueFils: 100,
         minBookingAmountAed: 0,
+        expirationPeriodDays: 365,
+        eligibleHotelIds: [],
         isActive: true,
       });
       console.log('[Admin] Seeded default loyalty rule');
@@ -89,11 +92,13 @@ export class AdminService implements OnModuleInit {
       ];
     }
 
-    const [data, total] = await Promise.all([
+    const [docs, total] = await Promise.all([
       this.companyModel.find(query).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
       this.companyModel.countDocuments(query),
     ]);
 
+    // Frontend Company interface uses `companyName`; DB schema field is `name`.
+    const data = docs.map((c) => ({ ...c, companyName: (c as any).name }));
     return { data, total, page, limit };
   }
 
@@ -107,7 +112,7 @@ export class AdminService implements OnModuleInit {
     ]);
 
     return {
-      company,
+      company: { ...company, companyName: (company as any).name },
       recentBookings,
       walletTransactionCount: txCount,
       availableCredit: company.creditLimit + company.walletBalance,
@@ -485,6 +490,26 @@ export class AdminService implements OnModuleInit {
   async getActiveLoyaltyRule() {
     const rule = await this.loyaltyRuleModel.findOne({ isActive: true }).lean();
     if (!rule) throw new NotFoundException('No active loyalty rule found');
+    return rule;
+  }
+
+  async addEligibleHotel(ruleId: string, dto: AddEligibleHotelDto) {
+    const rule = await this.loyaltyRuleModel.findByIdAndUpdate(
+      ruleId,
+      { $addToSet: { eligibleHotelIds: dto.hotelId } },
+      { new: true },
+    );
+    if (!rule) throw new NotFoundException('Loyalty rule not found');
+    return rule;
+  }
+
+  async removeEligibleHotel(ruleId: string, hotelId: string) {
+    const rule = await this.loyaltyRuleModel.findByIdAndUpdate(
+      ruleId,
+      { $pull: { eligibleHotelIds: hotelId } },
+      { new: true },
+    );
+    if (!rule) throw new NotFoundException('Loyalty rule not found');
     return rule;
   }
 

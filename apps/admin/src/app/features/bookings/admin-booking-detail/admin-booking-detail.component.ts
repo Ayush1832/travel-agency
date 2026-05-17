@@ -99,6 +99,28 @@ export class AdminBookingDetailComponent implements OnInit {
     });
   }
 
+  resendVoucher() {
+    this.bookingsService.resendVoucher(this.bookingId).subscribe({
+      next: (res) => this.snackBar.open(`Voucher sent to ${res.sentTo}`, 'OK', { duration: 4000 }),
+      error: () => this.snackBar.open('Failed to resend voucher', 'OK', { duration: 3000 }),
+    });
+  }
+
+  resync() {
+    this.updating = true;
+    this.bookingsService.resync(this.bookingId).subscribe({
+      next: () => {
+        this.snackBar.open('Booking resynced with supplier', 'OK', { duration: 3000 });
+        this.loadBooking();
+        this.updating = false;
+      },
+      error: () => {
+        this.snackBar.open('Resync failed', 'OK', { duration: 3000 });
+        this.updating = false;
+      }
+    });
+  }
+
   formatAed(fils: number): string {
     if (!fils) return '0.00';
     return (fils / 100).toLocaleString('en-AE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

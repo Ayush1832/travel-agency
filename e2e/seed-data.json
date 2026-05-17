@@ -1,0 +1,38 @@
+{
+  "superAdmin": {
+    "email": "superadmin@e2e.travel",
+    "password": "Admin@E2E2026!",
+    "id": "6a0986fb7c6bd9b1358d3822"
+  },
+  "pendingCompany": {
+    "id": "6a0986fb7c6bd9b1358d3823",
+    "name": "ACME Travel E2E",
+    "user": {
+      "email": "alice@acme-e2e.travel",
+      "password": "Client@E2E2026!",
+      "id": "6a0986fb7c6bd9b1358d3824"
+    }
+  },
+  "financeSubAdmin": {
+    "email": "finance@e2e.travel",
+    "password": "Finance@E2E2026!"
+  },
+  "companyA": {
+    "id": "6a0986fb7c6bd9b1358d382b",
+    "name": "Company Alpha E2E",
+    "user": {
+      "email": "user@alpha-e2e.travel",
+      "password": "Alpha@E2E2026!",
+      "id": "6a0986fc7c6bd9b1358d382d"
+    }
+  },
+  "companyB": {
+    "id": "6a0986fb7c6bd9b1358d382c",
+    "name": "Company Beta E2E",
+    "user": {
+      "email": "user@beta-e2e.travel",
+      "password": "Beta@E2E2026!",
+      "id": "6a0986fc7c6bd9b1358d382e"
+    }
+  }
+}

@@ -1,3 +1,17 @@
+.outstanding-warning {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff3e0;
+  border-left: 4px solid #ef6c00;
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  color: #e65100;
+  mat-icon { color: #ef6c00; flex-shrink: 0; }
+  a { color: #bf360c; font-weight: 500; }
+}
+
 .dashboard-header {
   margin-bottom: 24px;
 

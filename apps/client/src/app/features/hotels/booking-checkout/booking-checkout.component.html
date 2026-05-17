@@ -119,6 +119,24 @@
         </mat-card-content>
       </mat-card>
 
+      <!-- Loyalty Points -->
+      <mat-card class="loyalty-card" *ngIf="loyaltyPoints > 0">
+        <mat-card-header>
+          <mat-icon mat-card-avatar style="color:#f57f17">stars</mat-icon>
+          <mat-card-title>Loyalty Points</mat-card-title>
+          <mat-card-subtitle>{{ loyaltyPoints | number }} pts ≈ {{ loyaltyValueAed | number:'1.2-2' }} AED</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <p style="font-size:13px;color:rgba(0,0,0,0.6);margin:0 0 12px">
+            Convert your points to wallet credit before paying.
+          </p>
+          <button mat-stroked-button color="accent" (click)="redeemLoyaltyPoints()" [disabled]="redeemingPoints()" style="width:100%">
+            <mat-icon>redeem</mat-icon>
+            {{ redeemingPoints() ? 'Converting...' : 'Convert ' + (loyaltyPoints | number) + ' pts to Wallet' }}
+          </button>
+        </mat-card-content>
+      </mat-card>
+
       <!-- Payment Method -->
       <mat-card class="payment-card">
         <mat-card-header>

@@ -5,8 +5,11 @@ import { BookingsService } from './bookings.service';
 import { Booking, BookingSchema } from '../../db/schemas/booking.schema';
 import { BookingSequence, BookingSequenceSchema } from '../../db/schemas/booking-sequence.schema';
 import { ApiConfig, ApiConfigSchema } from '../../db/schemas/api-config.schema';
+import { WalletTransaction, WalletTransactionSchema } from '../../db/schemas/wallet-transaction.schema';
+import { LoyaltyRule, LoyaltyRuleSchema } from '../../db/schemas/loyalty-rule.schema';
 import { IntegrationsModule } from '../integrations/integrations.module';
 import { CompaniesModule } from '../companies/companies.module';
+import { WalletModule } from '../wallet/wallet.module';
 
 @Module({
   imports: [
@@ -14,9 +17,12 @@ import { CompaniesModule } from '../companies/companies.module';
       { name: Booking.name, schema: BookingSchema },
       { name: BookingSequence.name, schema: BookingSequenceSchema },
       { name: ApiConfig.name, schema: ApiConfigSchema },
+      { name: WalletTransaction.name, schema: WalletTransactionSchema },
+      { name: LoyaltyRule.name, schema: LoyaltyRuleSchema },
     ]),
     IntegrationsModule,
     CompaniesModule,
+    WalletModule,
   ],
   controllers: [BookingsController],
   providers: [BookingsService],

@@ -8,6 +8,8 @@ import {
   CmsEmailTemplate,
   CmsEmailTemplateSchema,
 } from '../../db/schemas/cms-email-template.schema';
+import { Role, RoleSchema } from '../../db/schemas/role.schema';
+import { PermissionsGuard } from '../../common/guards/permissions.guard';
 
 @Module({
   imports: [
@@ -15,10 +17,11 @@ import {
       { name: CmsPage.name, schema: CmsPageSchema },
       { name: CmsBanner.name, schema: CmsBannerSchema },
       { name: CmsEmailTemplate.name, schema: CmsEmailTemplateSchema },
+      { name: Role.name, schema: RoleSchema },
     ]),
   ],
   controllers: [CmsPublicController, CmsAdminController],
-  providers: [CmsService],
+  providers: [CmsService, PermissionsGuard],
   exports: [CmsService],
 })
 export class CmsModule {}

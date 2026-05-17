@@ -48,9 +48,35 @@ export class WalletDashboardComponent implements OnInit {
     this.walletService.getBalance().subscribe({
       next: (b) => {
         this.balance.set(b);
+        this.loyaltyPoints.set(b.loyaltyPoints ?? 0);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
+    });
+  }
+
+  get pointValueAed(): number {
+    const fils = this.balance()?.pointValueFils ?? 1;
+    return fils / 100;
+  }
+
+  get nextExpiryDate(): string | null {
+    return this.balance()?.nextExpiryDate ?? null;
+  }
+
+  downloadStatement() {
+    const to = new Date().toISOString().split('T')[0];
+    const from = new Date(Date.now() - 90 * 24 * 60 * 60_000).toISOString().split('T')[0];
+    this.walletService.getStatement(from, to).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `statement-${from}-to-${to}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => this.snackBar.open('Statement download failed', 'Close', { duration: 3000 }),
     });
   }
 

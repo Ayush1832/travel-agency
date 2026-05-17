@@ -30,7 +30,6 @@ export interface Booking {
 
 export interface CreateBookingDto {
   roomToken: string;
-  searchId: string;
   guests: GuestInfo[];
   specialRequests?: string;
   paymentMethod: 'credit' | 'online';

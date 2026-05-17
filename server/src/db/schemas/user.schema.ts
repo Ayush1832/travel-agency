@@ -57,6 +57,10 @@ export class User {
 
   @Prop() lastLoginIp?: string;
 
+  @Prop({ default: 0 }) failedLoginAttempts: number;
+
+  @Prop() lockedUntil?: Date;
+
   createdAt: Date;
   updatedAt: Date;
 }

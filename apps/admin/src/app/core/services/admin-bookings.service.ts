@@ -43,6 +43,14 @@ export class AdminBookingsService {
     return this.http.post(`${this.api}/${id}/refund`, { amount });
   }
 
+  resendVoucher(id: string): Observable<{ sentTo: string }> {
+    return this.http.post<{ sentTo: string }>(`${this.api}/${id}/resend-voucher`, {});
+  }
+
+  resync(id: string): Observable<any> {
+    return this.http.post(`${this.api}/${id}/resync`, {});
+  }
+
   exportCsv(params: any = {}): Observable<Blob> {
     let httpParams = new HttpParams();
     Object.keys(params).forEach(k => {

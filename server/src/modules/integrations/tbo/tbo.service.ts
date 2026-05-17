@@ -378,7 +378,7 @@ export class TboService implements IHotelSupplier {
       throw err;
     }
 
-    if (!raw?.HotelResult || raw.Status?.StatusId !== 1) {
+    if (!raw?.HotelResult || Number(raw.Status?.StatusId) !== 1) {
       throw new HttpException(
         `TBO PreBook failed: ${raw?.Status?.Description ?? 'Unknown'}`,
         HttpStatus.BAD_GATEWAY,
@@ -465,7 +465,7 @@ export class TboService implements IHotelSupplier {
     }
 
     const confirmed =
-      raw?.BookingStatus === 'Confirmed' || raw?.Status?.StatusId === 1;
+      raw?.BookingStatus === 'Confirmed' || Number(raw?.Status?.StatusId) === 1;
     const detail = raw?.HotelBookingDetail;
     const { lat, lng } = this.parseLatLng(detail?.HotelMap ?? '');
 
@@ -512,7 +512,7 @@ export class TboService implements IHotelSupplier {
     }
 
     return {
-      success: raw?.IsCancelled ?? raw?.Status?.StatusId === 1,
+      success: raw?.IsCancelled ?? Number(raw?.Status?.StatusId) === 1,
       refundAmount: this.toMinorUnits(raw?.RefundAmount ?? 0),
       cancellationFee: this.toMinorUnits(raw?.CancellationCharge ?? 0),
     };

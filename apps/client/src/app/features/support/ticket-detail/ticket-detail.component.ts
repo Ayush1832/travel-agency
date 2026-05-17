@@ -87,4 +87,36 @@ export class TicketDetailComponent implements OnInit {
     const t = this.ticket();
     return t?.status === 'open' || t?.status === 'in_progress';
   }
+
+  isClosed(): boolean {
+    return this.ticket()?.status === 'closed';
+  }
+
+  closeTicket() {
+    const t = this.ticket()!;
+    this.supportService.closeTicket(t._id).subscribe({
+      next: () => {
+        this.snackBar.open('Ticket closed', 'Close', { duration: 2000 });
+        this.loadTicket(t._id);
+      },
+      error: (err) => {
+        const msg = err?.error?.message || 'Failed to close ticket';
+        this.snackBar.open(msg, 'Close', { duration: 3000 });
+      },
+    });
+  }
+
+  reopenTicket() {
+    const t = this.ticket()!;
+    this.supportService.reopenTicket(t._id).subscribe({
+      next: () => {
+        this.snackBar.open('Ticket reopened', 'Close', { duration: 2000 });
+        this.loadTicket(t._id);
+      },
+      error: (err) => {
+        const msg = err?.error?.message || 'Failed to reopen ticket';
+        this.snackBar.open(msg, 'Close', { duration: 3000 });
+      },
+    });
+  }
 }

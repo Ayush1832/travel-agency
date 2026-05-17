@@ -71,9 +71,15 @@
           </button>
         </div>
 
-        <div *ngIf="booking.status === 'confirmed'" style="margin-top:16px">
+        <div *ngIf="booking.status === 'confirmed'" style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap">
           <button mat-flat-button color="warn" (click)="cancelBooking()" [disabled]="updating">
             <mat-icon>cancel</mat-icon> Cancel Booking
+          </button>
+          <button mat-stroked-button (click)="resendVoucher()" [disabled]="updating">
+            <mat-icon>email</mat-icon> Resend Voucher
+          </button>
+          <button mat-stroked-button (click)="resync()" [disabled]="updating">
+            <mat-icon>sync</mat-icon> Resync with Supplier
           </button>
         </div>
       </mat-card-content>

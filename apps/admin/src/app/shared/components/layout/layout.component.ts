@@ -23,6 +23,7 @@ export class LayoutComponent {
     { label: 'CMS', icon: 'web', route: '/cms' },
     { label: 'Sub-Admins', icon: 'admin_panel_settings', route: '/sub-admins' },
     { label: 'API Settings', icon: 'settings', route: '/api-settings' },
+    { label: 'Loyalty', icon: 'stars', route: '/loyalty' },
     { label: 'Support', icon: 'support_agent', route: '/support' },
   ];
 

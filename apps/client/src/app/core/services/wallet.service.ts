@@ -47,4 +47,9 @@ export class WalletService {
   redeemPoints(points: number): Observable<unknown> {
     return this.http.post(`${this.api}/loyalty/redeem`, { points });
   }
+
+  getStatement(from: string, to: string): Observable<Blob> {
+    const params = new HttpParams().set('from', from).set('to', to);
+    return this.http.get(`${this.api}/statement`, { params, responseType: 'blob' });
+  }
 }

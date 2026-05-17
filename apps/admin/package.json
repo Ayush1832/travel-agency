@@ -27,7 +27,11 @@
     "@angular/build": "^21.2.11",
     "@angular/cli": "^21.2.11",
     "@angular/compiler-cli": "^21.2.0",
+    "@types/jest": "^30.0.0",
+    "jest": "^30.4.2",
+    "jest-preset-angular": "^16.1.5",
     "prettier": "^3.8.1",
+    "ts-jest": "^29.4.9",
     "typescript": "~5.9.2"
   }
 }
