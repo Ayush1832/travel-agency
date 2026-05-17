@@ -59,7 +59,7 @@ describe('NotificationsService', () => {
   });
 
   describe('send — in-app channel', () => {
-    it('saves notification document without calling email/SMS', async () => {
+    it('saves notification document without calling email transport', async () => {
       await service.send({
         recipientUserId: userId,
         channel: NotificationChannel.IN_APP,
@@ -79,7 +79,7 @@ describe('NotificationsService', () => {
       mockEmailTemplateModel.findOne.mockReturnValue({
         lean: jest.fn().mockResolvedValue(null),
       });
-      mockConfig.get.mockReturnValue(undefined); // SES not configured → logs only
+      mockConfig.get.mockReturnValue(undefined); // SMTP not configured → logs only
 
       await service.send({
         recipientUserId: userId,
@@ -135,40 +135,11 @@ describe('NotificationsService', () => {
     });
   });
 
-  describe('send — SMS channel', () => {
-    it('resolves phone from user and attempts to send', async () => {
-      mockUserModel.findById.mockReturnValue(
-        withSelect({ phone: '+971501234567' }),
-      );
-      mockConfig.get.mockReturnValue(undefined); // Twilio not configured
-
-      await service.send({
-        recipientUserId: userId,
-        channel: NotificationChannel.SMS,
-        type: NotificationType.BOOKING_CONFIRMED,
-        title: 'Booking Confirmed',
-        message: 'Your booking BK-001 is confirmed',
-      });
-
-      expect(mockUserModel.findById).toHaveBeenCalledWith(userId);
-      expect(mockNotification.save).toHaveBeenCalled();
-    });
-  });
-
-  describe('directSendEmail — falls back when SES not configured', () => {
-    it('returns without error when AWS credentials are absent', async () => {
+  describe('directSendEmail — falls back when SMTP not configured', () => {
+    it('returns without error when SMTP credentials are absent', async () => {
       mockConfig.get.mockReturnValue(undefined);
       await expect(
         service.directSendEmail('test@example.com', 'Subject', '<p>Body</p>'),
-      ).resolves.toBeUndefined();
-    });
-  });
-
-  describe('directSendSms — falls back when Twilio not configured', () => {
-    it('returns without error when Twilio credentials are absent', async () => {
-      mockConfig.get.mockReturnValue(undefined);
-      await expect(
-        service.directSendSms('+971501234567', 'Test message'),
       ).resolves.toBeUndefined();
     });
   });

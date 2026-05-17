@@ -19,12 +19,12 @@ export default () => ({
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
   },
 
-  aws: {
-    region: process.env.AWS_REGION ?? 'me-south-1',
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    s3Bucket: process.env.AWS_S3_BUCKET ?? 'travel-b2b-vouchers',
-    sesSenderEmail: process.env.AWS_SES_SENDER_EMAIL ?? 'no-reply@example.com',
+  smtp: {
+    host: process.env.SMTP_HOST ?? '',
+    port: parseInt(process.env.SMTP_PORT ?? '587', 10),
+    user: process.env.SMTP_USER ?? '',
+    pass: process.env.SMTP_PASS ?? '',
+    from: process.env.SMTP_FROM ?? '',
   },
 
   currency: {
@@ -54,9 +54,4 @@ export default () => ({
     sandbox: process.env.TBO_SANDBOX === 'true',
   },
 
-  twilio: {
-    accountSid: process.env.TWILIO_ACCOUNT_SID ?? '',
-    authToken: process.env.TWILIO_AUTH_TOKEN ?? '',
-    fromNumber: process.env.TWILIO_FROM_NUMBER ?? '',
-  },
 });

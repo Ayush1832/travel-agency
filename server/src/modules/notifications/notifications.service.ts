@@ -2,9 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
-import * as https from 'https';
-import * as crypto from 'crypto';
-import * as querystring from 'querystring';
+import * as nodemailer from 'nodemailer';
 import {
   Notification,
   NotificationDocument,
@@ -71,11 +69,6 @@ export class NotificationsService {
           type: dto.type,
         });
       }
-    } else if (dto.channel === NotificationChannel.SMS) {
-      const phone = await this.resolvePhone(dto);
-      if (phone) {
-        await this.sendSms(phone, dto.message);
-      }
     }
 
     return notification;
@@ -101,11 +94,6 @@ export class NotificationsService {
     return null;
   }
 
-  /**
-   * Look up a CMS email template by notification type.
-   * Falls back to a default inline HTML template if none is found.
-   * Replaces {{title}}, {{message}}, and any keys in `data` as placeholders.
-   */
   private async renderEmailTemplate(
     type: NotificationType,
     title: string,
@@ -167,103 +155,19 @@ export class NotificationsService {
 </html>`.trim();
   }
 
-  private async resolvePhone(dto: SendNotificationDto): Promise<string | null> {
-    if (dto.recipientUserId) {
-      const user = await this.userModel.findById(dto.recipientUserId).select('phone').lean();
-      return (user as unknown as Record<string, unknown>)?.phone as string ?? null;
-    }
-    if (dto.recipientCompanyId) {
-      const company = await this.companyModel.findById(dto.recipientCompanyId).select('phone').lean();
-      return (company as unknown as Record<string, unknown>)?.phone as string ?? null;
-    }
-    return null;
-  }
-
   /**
-   * Send SMS via Twilio REST API.
-   * Requires: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER env vars.
-   * Falls back to structured log if credentials are not configured.
+   * Send an email via Nodemailer using SMTP (Brevo or any provider).
+   * Required env vars: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM
+   * Falls back to structured logging when SMTP is not configured.
    */
-  private async sendSms(to: string, body: string): Promise<void> {
-    const accountSid = this.config.get<string>('TWILIO_ACCOUNT_SID');
-    const authToken = this.config.get<string>('TWILIO_AUTH_TOKEN');
-    const fromNumber = this.config.get<string>('TWILIO_FROM_NUMBER');
-
-    if (!accountSid || !authToken || !fromNumber) {
-      this.logger.log('[SMS Notification] Twilio not configured — logging SMS instead', {
-        to,
-        bodyPreview: body.substring(0, 80),
-      });
-      return;
-    }
-
-    try {
-      const formBody = querystring.stringify({
-        To: to,
-        From: fromNumber,
-        Body: body,
-      });
-
-      await new Promise<void>((resolve, reject) => {
-        const auth = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
-        const options: https.RequestOptions = {
-          method: 'POST',
-          hostname: 'api.twilio.com',
-          path: `/2010-04-01/Accounts/${accountSid}/Messages.json`,
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Content-Length': Buffer.byteLength(formBody),
-            'Authorization': `Basic ${auth}`,
-          },
-        };
-
-        const req = https.request(options, (res) => {
-          let data = '';
-          res.on('data', (chunk) => (data += chunk));
-          res.on('end', () => {
-            if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
-              resolve();
-            } else {
-              reject(new Error(`Twilio returned HTTP ${res.statusCode}: ${data}`));
-            }
-          });
-        });
-        req.on('error', reject);
-        req.write(formBody);
-        req.end();
-      });
-
-      this.logger.log(`[SMS Notification] Sent to ${to}`);
-    } catch (err) {
-      this.logger.error(`[SMS Notification] Failed to send to ${to}`, err);
-    }
-  }
-
-  /**
-   * Send an email via AWS SES using the Query API over HTTPS.
-   * Falls back to structured console logging when AWS credentials are not configured.
-   *
-   * Required env vars:
-   *   AWS_ACCESS_KEY_ID
-   *   AWS_SECRET_ACCESS_KEY
-   *   AWS_SES_SENDER_EMAIL  (verified sender address)
-   *   AWS_REGION            (default: us-east-1)
-   */
-  async directSendEmail(to: string, subject: string, html: string): Promise<void> {
-    return this.sendEmail(to, subject, html);
-  }
-
-  async directSendSms(to: string, body: string): Promise<void> {
-    return this.sendSms(to, body);
-  }
-
   private async sendEmail(to: string, subject: string, html: string): Promise<void> {
-    const accessKeyId = this.config.get<string>('AWS_ACCESS_KEY_ID');
-    const secretKey = this.config.get<string>('AWS_SECRET_ACCESS_KEY');
-    const senderEmail = this.config.get<string>('AWS_SES_SENDER_EMAIL');
+    const host = this.config.get<string>('SMTP_HOST');
+    const user = this.config.get<string>('SMTP_USER');
+    const pass = this.config.get<string>('SMTP_PASS');
+    const from = this.config.get<string>('SMTP_FROM') ?? user;
 
-    if (!accessKeyId || !secretKey || !senderEmail) {
-      this.logger.log('[Email Notification] AWS SES not configured — logging email instead', {
+    if (!host || !user || !pass) {
+      this.logger.log('[Email Notification] SMTP not configured — logging email instead', {
         to,
         subject,
         htmlPreview: html.substring(0, 120) + '…',
@@ -271,136 +175,28 @@ export class NotificationsService {
       return;
     }
 
-    const region = this.config.get<string>('AWS_REGION') ?? 'us-east-1';
+    const port = parseInt(this.config.get<string>('SMTP_PORT') ?? '587', 10);
 
     try {
-      await this.sesSendEmail({ to, subject, html, senderEmail, region, accessKeyId, secretKey });
+      const transporter = nodemailer.createTransport({
+        host,
+        port,
+        secure: port === 465,
+        auth: { user, pass },
+      });
+
+      await transporter.sendMail({ from, to, subject, html });
       this.logger.log(`[Email Notification] Sent to ${to} — subject: "${subject}"`);
     } catch (err) {
       this.logger.error(`[Email Notification] Failed to send to ${to}`, err);
     }
   }
 
-  /**
-   * Call SES SendEmail using AWS Signature Version 4 and the Query (form-urlencoded) API.
-   * We use Node's built-in `https` module — no extra packages required.
-   */
-  private sesSendEmail(opts: {
-    to: string;
-    subject: string;
-    html: string;
-    senderEmail: string;
-    region: string;
-    accessKeyId: string;
-    secretKey: string;
-  }): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const { to, subject, html, senderEmail, region, accessKeyId, secretKey } = opts;
-
-      const host = `email.${region}.amazonaws.com`;
-      const endpoint = '/';
-      const service = 'ses';
-
-      // ── Build the query-string body ────────────────────────────────────────
-      const params: Record<string, string> = {
-        Action: 'SendEmail',
-        'Source': senderEmail,
-        'Destination.ToAddresses.member.1': to,
-        'Message.Subject.Data': subject,
-        'Message.Subject.Charset': 'UTF-8',
-        'Message.Body.Html.Data': html,
-        'Message.Body.Html.Charset': 'UTF-8',
-        Version: '2010-12-01',
-      };
-      const body = querystring.stringify(params);
-
-      // ── AWS Signature Version 4 ────────────────────────────────────────────
-      const now = new Date();
-      const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '').substring(0, 15) + 'Z';
-      const dateStamp = amzDate.substring(0, 8);
-
-      const contentType = 'application/x-www-form-urlencoded';
-
-      const canonicalHeaders =
-        `content-type:${contentType}\n` +
-        `host:${host}\n` +
-        `x-amz-date:${amzDate}\n`;
-
-      const signedHeaders = 'content-type;host;x-amz-date';
-
-      const payloadHash = crypto.createHash('sha256').update(body).digest('hex');
-
-      const canonicalRequest = [
-        'POST',
-        endpoint,
-        '',
-        canonicalHeaders,
-        signedHeaders,
-        payloadHash,
-      ].join('\n');
-
-      const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
-      const stringToSign = [
-        'AWS4-HMAC-SHA256',
-        amzDate,
-        credentialScope,
-        crypto.createHash('sha256').update(canonicalRequest).digest('hex'),
-      ].join('\n');
-
-      const signingKey = this.getSigningKey(secretKey, dateStamp, region, service);
-      const signature = crypto
-        .createHmac('sha256', signingKey)
-        .update(stringToSign)
-        .digest('hex');
-
-      const authorizationHeader =
-        `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}, ` +
-        `SignedHeaders=${signedHeaders}, Signature=${signature}`;
-
-      // ── Make the HTTPS request ─────────────────────────────────────────────
-      const reqOptions: https.RequestOptions = {
-        method: 'POST',
-        hostname: host,
-        path: endpoint,
-        headers: {
-          'Content-Type': contentType,
-          'Content-Length': Buffer.byteLength(body),
-          'X-Amz-Date': amzDate,
-          'Authorization': authorizationHeader,
-        },
-      };
-
-      const req = https.request(reqOptions, (res) => {
-        let data = '';
-        res.on('data', (chunk) => (data += chunk));
-        res.on('end', () => {
-          if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
-            resolve();
-          } else {
-            reject(new Error(`SES returned HTTP ${res.statusCode}: ${data}`));
-          }
-        });
-      });
-
-      req.on('error', reject);
-      req.write(body);
-      req.end();
-    });
+  async directSendEmail(to: string, subject: string, html: string): Promise<void> {
+    return this.sendEmail(to, subject, html);
   }
 
-  private getSigningKey(
-    secretKey: string,
-    dateStamp: string,
-    region: string,
-    service: string,
-  ): Buffer {
-    const kDate = crypto.createHmac('sha256', `AWS4${secretKey}`).update(dateStamp).digest();
-    const kRegion = crypto.createHmac('sha256', kDate).update(region).digest();
-    const kService = crypto.createHmac('sha256', kRegion).update(service).digest();
-    return crypto.createHmac('sha256', kService).update('aws4_request').digest();
-  }
-
-  // ── Read methods (unchanged) ─────────────────────────────────────────────────
+  // ── Read methods ─────────────────────────────────────────────────────────────
 
   async markRead(notificationId: string, userId: string): Promise<NotificationDocument | null> {
     return this.notificationModel.findOneAndUpdate(

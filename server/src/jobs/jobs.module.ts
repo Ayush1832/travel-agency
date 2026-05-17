@@ -7,13 +7,11 @@ import { NotificationsModule } from '../modules/notifications/notifications.modu
 import {
   QUEUE_VOUCHER,
   QUEUE_EMAIL,
-  QUEUE_SMS,
   QUEUE_REPORT,
   QUEUE_SETTLEMENT_REMINDER,
 } from './jobs.constants';
 import { VoucherProcessor } from './voucher.processor';
 import { EmailProcessor } from './email.processor';
-import { SmsProcessor } from './sms.processor';
 import { ReportProcessor } from './report.processor';
 import { SettlementReminderProcessor } from './settlement-reminder.processor';
 
@@ -41,7 +39,6 @@ const DEFAULT_JOB_OPTIONS = {
     BullModule.registerQueue(
       { name: QUEUE_VOUCHER, defaultJobOptions: DEFAULT_JOB_OPTIONS },
       { name: QUEUE_EMAIL, defaultJobOptions: DEFAULT_JOB_OPTIONS },
-      { name: QUEUE_SMS, defaultJobOptions: DEFAULT_JOB_OPTIONS },
       { name: QUEUE_REPORT, defaultJobOptions: DEFAULT_JOB_OPTIONS },
       { name: QUEUE_SETTLEMENT_REMINDER, defaultJobOptions: DEFAULT_JOB_OPTIONS },
     ),
@@ -50,7 +47,6 @@ const DEFAULT_JOB_OPTIONS = {
   providers: [
     VoucherProcessor,
     EmailProcessor,
-    SmsProcessor,
     ReportProcessor,
     SettlementReminderProcessor,
   ],

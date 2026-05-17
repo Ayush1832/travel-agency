@@ -4,9 +4,8 @@ import { Document, Types } from 'mongoose';
 export type NotificationDocument = Notification & Document;
 
 export enum NotificationChannel {
-  INAPP = 'inapp',
+  IN_APP = 'inapp',
   EMAIL = 'email',
-  SMS = 'sms',
 }
 
 export enum NotificationType {

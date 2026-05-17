@@ -249,7 +249,7 @@ export class AdminService implements OnModuleInit {
   private async sendNotification(companyId: string, type: NotificationType, title: string, message: string) {
     await this.notificationModel.create({
       recipientCompanyId: new Types.ObjectId(companyId),
-      channel: NotificationChannel.INAPP,
+      channel: NotificationChannel.IN_APP,
       type,
       title,
       message,
