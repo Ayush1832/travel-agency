@@ -1,9 +1,8 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
-# Copy root workspace manifests (lockfile lives at root)
 COPY package.json package-lock.json ./
 COPY server/package.json ./server/
-RUN npm ci --workspace=server
+RUN npm ci --workspace=server --ignore-scripts
 COPY server/ ./server/
 RUN npm run build --workspace=server
 
@@ -12,7 +11,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY package.json package-lock.json ./
 COPY server/package.json ./server/
-RUN npm ci --workspace=server --omit=dev
+RUN npm ci --workspace=server --omit=dev --ignore-scripts
 COPY --from=builder /app/server/dist ./server/dist
 WORKDIR /app/server
 EXPOSE 3000
