@@ -50,15 +50,20 @@ jobs:
 
             echo "── Rebuilding client app ──"
             cd apps/client
-            npm install --legacy-peer-deps
+            HUSKY=0 npm install --legacy-peer-deps --ignore-scripts
             npx ng build --configuration production
             cd ../..
 
             echo "── Rebuilding admin app ──"
             cd apps/admin
-            npm install --legacy-peer-deps
+            HUSKY=0 npm install --legacy-peer-deps --ignore-scripts
             npx ng build --configuration production
             cd ../..
+
+            echo "── Fixing permissions for Nginx ──"
+            chmod o+x /root
+            chmod -R o+rx /root/travel-agency/apps/client/dist
+            chmod -R o+rx /root/travel-agency/apps/admin/dist
 
             echo "── Reloading Nginx ──"
             systemctl reload nginx
