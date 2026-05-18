@@ -1,220 +1,96 @@
 .results-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 16px;
-
-  h2 {
-    font-size: 22px;
-    font-weight: 600;
-    margin-bottom: 8px;
-  }
-
-  .sort-select {
-    min-width: 200px;
-  }
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px; flex-wrap: wrap; gap: 16px;
+  h2 { font-size: 22px; font-weight: 700; color: #0f172a; }
+  .sort-select { min-width: 200px; }
 }
 
 .results-layout {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 270px 1fr;
   gap: 24px;
 }
 
-.filters-sidebar {
-  mat-card {
-    position: sticky;
-    top: 80px;
-    border-radius: 12px;
-  }
+.filters-sidebar mat-card {
+  position: sticky; top: 80px;
+  border-radius: 14px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
 }
 
 .filter-section {
   padding: 16px 0;
-
-  h4 {
-    font-size: 14px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 12px;
-  }
+  border-bottom: 1px solid #f1f5f9;
+  &:last-child { border-bottom: none; }
+  h4 { font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 12px; letter-spacing: 0.2px; text-transform: uppercase; }
 }
 
-.price-slider {
-  width: 100%;
-  accent-color: #3f51b5;
-}
+.price-slider { width: 100%; accent-color: #1565c0; }
+.price-labels  { display: flex; justify-content: space-between; font-size: 12px; color: #64748b; margin-top: 4px; }
 
-.price-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: #666;
-  margin-top: 4px;
-}
+.star-filter-row { margin-bottom: 8px; .star-icons { display: inline-flex; align-items: center; } }
+.star-icon    { color: #f59e0b; font-size: 20px; width: 20px; height: 20px; }
+.star-icon-sm { color: #f59e0b; font-size: 16px; width: 16px; height: 16px; }
 
-.star-filter-row {
-  margin-bottom: 8px;
+.results-list { display: flex; flex-direction: column; gap: 16px; }
 
-  .star-icons {
-    display: inline-flex;
-    align-items: center;
-  }
-}
-
-.star-icon {
-  color: #ffc107;
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
-}
-
-.results-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.loading-center {
-  display: flex;
-  justify-content: center;
-  padding: 80px;
-}
+.loading-center { display: flex; justify-content: center; padding: 80px; }
 
 .empty-state {
-  text-align: center;
-  padding: 80px 24px;
-  color: #666;
-
-  .empty-icon {
-    font-size: 64px;
-    width: 64px;
-    height: 64px;
-    color: #ccc;
-    margin-bottom: 16px;
-  }
-
-  h3 {
-    font-size: 20px;
-    margin-bottom: 8px;
-  }
-
-  p {
-    margin-bottom: 24px;
-  }
+  text-align: center; padding: 80px 24px; color: #64748b;
+  .empty-icon { font-size: 64px; width: 64px; height: 64px; color: #cbd5e1; margin-bottom: 16px; }
+  h3 { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+  p { margin-bottom: 24px; }
 }
 
 .hotel-card {
-  border-radius: 12px;
-  overflow: hidden;
-  transition: box-shadow 0.2s;
-
+  border-radius: 14px !important;
+  border: 1px solid #e2e8f0 !important;
+  overflow: hidden; transition: box-shadow 0.2s, transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
   &:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.06) !important;
+    transform: translateY(-2px);
   }
 }
 
-.hotel-card-inner {
-  display: flex;
-  gap: 0;
-}
+.hotel-card-inner { display: flex; gap: 0; }
 
 .hotel-image {
-  width: 200px;
-  min-height: 150px;
-  flex-shrink: 0;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+  width: 210px; min-height: 160px; flex-shrink: 0;
+  background: linear-gradient(135deg, #e2e8f0, #f1f5f9);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  img { width: 100%; height: 100%; object-fit: cover; }
+  .no-img-icon { font-size: 48px; width: 48px; height: 48px; color: #cbd5e1; }
 }
 
 .hotel-info {
-  flex: 1;
-  padding: 16px;
+  flex: 1; padding: 18px;
+  .hotel-top { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+  .hotel-name { font-size: 18px; font-weight: 700; color: #0f172a; flex: 1; }
+}
 
-  .hotel-top {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    margin-bottom: 8px;
-  }
+.star-row { display: flex; margin-bottom: 8px; }
 
-  .hotel-name {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
-    flex: 1;
-  }
+.hotel-location {
+  display: flex; align-items: center; color: #64748b; font-size: 13px; gap: 2px;
+  .location-icon { font-size: 16px; width: 16px; height: 16px; color: #94a3b8; }
 }
 
 .refundable-badge {
-  background: #e8f5e9;
-  color: #2e7d32;
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 10px;
-  white-space: nowrap;
-}
-
-.star-row {
-  display: flex;
-  margin-bottom: 8px;
-}
-
-.star-icon-sm {
-  color: #ffc107;
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
-}
-
-.hotel-location {
-  display: flex;
-  align-items: center;
-  color: #666;
-  font-size: 14px;
-  gap: 2px;
-
-  .location-icon {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-    color: #999;
-  }
+  background: #dcfce7; color: #15803d;
+  font-size: 11px; font-weight: 600;
+  padding: 3px 8px; border-radius: 10px; white-space: nowrap;
 }
 
 .hotel-price {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 16px;
-  min-width: 160px;
-  border-left: 1px solid #f0f0f0;
+  display: flex; flex-direction: column; align-items: flex-end;
+  justify-content: center; padding: 18px; min-width: 170px;
+  border-left: 1px solid #f1f5f9; background: #f8fafc;
 
-  .price-from {
-    font-size: 12px;
-    color: #999;
-  }
-
-  .price-value {
-    font-size: 28px;
-    font-weight: 700;
-    color: #3f51b5;
-  }
-
-  .price-currency {
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 16px;
-  }
-
-  .view-btn {
-    width: 100%;
-  }
+  .price-from { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+  .price-value { font-size: 30px; font-weight: 800; color: #1565c0; line-height: 1; margin: 4px 0 2px; }
+  .price-currency { font-size: 12px; color: #64748b; margin-bottom: 16px; }
+  .view-btn { width: 100%; border-radius: 8px !important; font-weight: 600 !important; }
 }

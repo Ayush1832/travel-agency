@@ -1,5 +1,22 @@
-.page-title { font-size: 24px; font-weight: 600; color: #311b92; }
+.page-title { font-size: 26px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+
 .tab-content { padding: 24px 0; }
-.tab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; h2 { font-size: 18px; font-weight: 600; } }
-.loading-row { display: flex; justify-content: center; padding: 40px; }
-.empty-state { text-align: center; padding: 40px; color: rgba(0,0,0,0.4); }
+
+.tab-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+  h2 { font-size: 18px; font-weight: 700; color: #1e293b; }
+}
+
+.table-card {
+  border-radius: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+  overflow: hidden;
+}
+
+.loading-row { display: flex; justify-content: center; padding: 60px; }
+
+.empty-state {
+  text-align: center; padding: 60px; color: #94a3b8;
+  mat-icon { font-size: 56px; width: 56px; height: 56px; display: block; margin: 0 auto 12px; }
+}

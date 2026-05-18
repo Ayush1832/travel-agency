@@ -1,99 +1,56 @@
-.back-btn {
-  margin-bottom: 16px;
-}
+.back-btn { margin-bottom: 16px; }
+
+.loading-center { display: flex; justify-content: center; padding: 80px; }
 
 .carousel-container {
-  position: relative;
-  width: 100%;
-  height: 400px;
-  border-radius: 16px;
-  overflow: hidden;
-  background: #f0f0f0;
+  position: relative; width: 100%; height: 420px;
+  border-radius: 16px; overflow: hidden;
+  background: linear-gradient(135deg, #e2e8f0, #f1f5f9);
   margin-bottom: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
 
-.carousel-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+.carousel-image { width: 100%; height: 100%; object-fit: cover; }
 
 .carousel-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: #bbb;
-
-  mat-icon {
-    font-size: 64px;
-    width: 64px;
-    height: 64px;
-    margin-bottom: 8px;
-  }
+  display: flex; flex-direction: column; align-items: center; color: #94a3b8;
+  mat-icon { font-size: 64px; width: 64px; height: 64px; margin-bottom: 8px; }
 }
 
 .carousel-btn {
-  position: absolute;
-  background: rgba(255, 255, 255, 0.9) !important;
-  z-index: 10;
-
+  position: absolute; background: rgba(255,255,255,0.95) !important;
+  z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
   &.prev { left: 16px; }
   &.next { right: 16px; }
 }
 
 .image-counter {
-  position: absolute;
-  bottom: 12px;
-  right: 16px;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
+  position: absolute; bottom: 14px; right: 18px;
+  background: rgba(0,0,0,0.65); color: white;
+  padding: 4px 12px; border-radius: 14px; font-size: 12px; font-weight: 500;
 }
 
 .hotel-info-card {
-  border-radius: 16px;
+  border-radius: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
 }
 
-.hotel-header {
-  padding: 16px 0;
-}
+.hotel-header { padding: 8px 0 16px; }
 
 .hotel-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 8px;
+  font-size: 28px; font-weight: 800;
+  color: #0f172a; letter-spacing: -0.5px; margin-bottom: 8px;
 }
 
-.star-row {
-  display: flex;
-  margin-bottom: 8px;
-}
-
-.star-icon {
-  color: #ffc107;
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
-}
+.star-row { display: flex; margin-bottom: 8px; }
+.star-icon { color: #f59e0b; font-size: 20px; width: 20px; height: 20px; }
 
 .hotel-address {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: #666;
-  font-size: 14px;
-
-  mat-icon {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-  }
+  display: flex; align-items: center; gap: 4px;
+  color: #64748b; font-size: 14px;
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
 }
 
 .description-section,
@@ -101,56 +58,22 @@
 .rooms-section,
 .map-section {
   padding: 20px 0;
-
-  h3 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 12px;
-  }
-
-  p {
-    color: #555;
-    line-height: 1.7;
-  }
+  border-top: 1px solid #f1f5f9;
+  h3 { font-size: 17px; font-weight: 700; color: #1e293b; margin-bottom: 14px; }
+  p  { color: #475569; line-height: 1.75; font-size: 14px; }
 }
 
 .rooms-table {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px; overflow: hidden;
 }
 
 .map-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
-  background: #f5f5f5;
-  border-radius: 8px;
-  color: #999;
-  gap: 8px;
-
-  mat-icon {
-    font-size: 48px;
-    width: 48px;
-    height: 48px;
-  }
-
-  p {
-    font-size: 16px;
-    font-weight: 500;
-    color: #666;
-  }
-
-  span {
-    font-size: 13px;
-  }
-}
-
-.loading-center {
-  display: flex;
-  justify-content: center;
-  padding: 80px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 200px; background: var(--gray-50, #f8fafc);
+  border-radius: 10px; color: #94a3b8; gap: 8px;
+  border: 2px dashed #e2e8f0;
+  mat-icon { font-size: 48px; width: 48px; height: 48px; }
+  p { font-size: 15px; font-weight: 500; color: #64748b; }
+  span { font-size: 13px; }
 }

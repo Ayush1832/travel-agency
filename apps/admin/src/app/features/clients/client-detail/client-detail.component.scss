@@ -1,49 +1,57 @@
-.page-title { font-size: 24px; font-weight: 600; color: #311b92; }
+.page-title {
+  font-size: 26px; font-weight: 800;
+  color: #0f172a; letter-spacing: -0.5px;
+}
+
 .loading-row { display: flex; justify-content: center; padding: 60px; }
-.empty-state { text-align: center; padding: 24px; color: rgba(0,0,0,0.4); }
+.empty-state { text-align: center; padding: 24px; color: #94a3b8; }
 
 .detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
   @media (max-width: 900px) { grid-template-columns: 1fr; }
 }
 
 .full-width-card { grid-column: 1 / -1; }
 
 .info-card {
-  border-radius: 12px !important;
+  border-radius: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+
   .info-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-    font-size: 14px;
-    .label { color: rgba(0,0,0,0.6); font-weight: 500; }
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0; font-size: 14px;
+    border-bottom: 1px solid #f1f5f9;
+    &:last-child { border-bottom: none; }
+    .label { color: #64748b; font-weight: 500; }
+    strong { color: #1e293b; font-weight: 600; }
   }
 }
 
 .credit-card {
-  border-radius: 12px !important;
+  border-radius: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+
   .credit-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 20px;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 14px; margin-bottom: 20px;
   }
+
   .credit-item {
-    background: #f5f5f5;
-    padding: 16px;
-    border-radius: 8px;
-    .credit-label { font-size: 12px; color: rgba(0,0,0,0.6); text-transform: uppercase; }
-    .credit-value { font-size: 22px; font-weight: 700; color: #311b92; margin-top: 4px; }
-    .cur { font-size: 12px; color: rgba(0,0,0,0.5); }
+    background: #f8fafc; padding: 16px; border-radius: 10px;
+    border: 1px solid #f1f5f9;
+    .credit-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600; }
+    .credit-value { font-size: 24px; font-weight: 800; color: #311b92; margin-top: 4px; }
+    .cur { font-size: 12px; color: #64748b; }
   }
+
   .credit-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 }
 
 .actions-card {
-  border-radius: 12px !important;
+  border-radius: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
   .action-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
 }

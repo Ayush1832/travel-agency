@@ -1,6 +1,18 @@
-.page-title { font-size: 24px; font-weight: 600; color: #311b92; }
+.page-title { font-size: 26px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+
 .loading-row { display: flex; justify-content: center; padding: 60px; }
+
+.editor-card {
+  border-radius: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+}
+
 .page-form { display: flex; flex-direction: column; gap: 16px; }
 .meta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .toggle-row { padding: 8px 0; }
-.button-row { display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px; }
+
+.button-row {
+  display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px;
+  button { border-radius: 8px !important; font-weight: 600 !important; }
+}

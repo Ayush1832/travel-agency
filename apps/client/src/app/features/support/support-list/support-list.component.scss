@@ -1,70 +1,54 @@
 .page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
 
-  h2 {
-    font-size: 24px;
-    font-weight: 600;
-    color: #333;
-  }
+  h2 { font-size: 24px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
 
   .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    .status-select {
-      min-width: 180px;
-    }
+    display: flex; align-items: center; gap: 12px;
+    .status-select { min-width: 180px; }
   }
 }
 
 .table-card {
-  border-radius: 12px;
+  border-radius: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
   overflow: hidden;
 }
 
-.loading-center {
-  display: flex;
-  justify-content: center;
-  padding: 60px;
-}
+.loading-center { display: flex; justify-content: center; padding: 80px; }
 
 .clickable-row {
-  cursor: pointer;
-  &:hover { background: rgba(0,0,0,0.03); }
+  cursor: pointer; transition: background 0.15s;
+  &:hover { background: #f0f7ff; }
 }
 
+// ── Priority Badges ───────────────────────────────────────
 .priority-badge {
-  padding: 3px 10px;
-  border-radius: 10px;
-  font-size: 12px;
-  font-weight: 500;
+  padding: 3px 10px; border-radius: 10px;
+  font-size: 12px; font-weight: 600; white-space: nowrap;
 }
 
-.priority-urgent { background: #fce4ec; color: #880e4f; }
-.priority-high { background: #ffebee; color: #c62828; }
-.priority-medium { background: #fff3e0; color: #e65100; }
-.priority-low { background: #f1f8e9; color: #558b2f; }
+.priority-urgent { background: #fce7f3; color: #9d174d; }
+.priority-high   { background: #fee2e2; color: #b91c1c; }
+.priority-medium { background: #fef3c7; color: #92400e; }
+.priority-low    { background: #dcfce7; color: #15803d; }
+
+// ── Status Badges ─────────────────────────────────────────
+.status-open     { background: #eff6ff; color: #1d4ed8; }
+.status-pending  { background: #fef3c7; color: #92400e; }
+.status-resolved { background: #dcfce7; color: #15803d; }
+.status-closed   { background: #f1f5f9; color: #64748b; }
+
+.status-badge {
+  padding: 3px 10px; border-radius: 10px;
+  font-size: 12px; font-weight: 600;
+}
 
 .empty-state {
-  text-align: center;
-  padding: 60px;
-  color: #999;
-
-  mat-icon {
-    font-size: 56px;
-    width: 56px;
-    height: 56px;
-    margin-bottom: 12px;
-  }
-
-  h3 {
-    font-size: 18px;
-    margin-bottom: 16px;
-  }
+  text-align: center; padding: 80px 24px;
+  mat-icon { font-size: 64px; width: 64px; height: 64px; color: #cbd5e1; margin-bottom: 16px; display: block; }
+  h3 { font-size: 20px; font-weight: 600; color: #1e293b; margin-bottom: 8px; }
+  p { color: #64748b; margin-bottom: 24px; }
 }

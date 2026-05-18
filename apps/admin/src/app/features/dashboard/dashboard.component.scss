@@ -1,76 +1,88 @@
-.page-title { font-size: 24px; font-weight: 600; color: #311b92; }
-
-.loading-overlay {
-  display: flex; justify-content: center; padding: 60px;
+.page-title {
+  font-size: 26px; font-weight: 800;
+  color: #0f172a; letter-spacing: -0.5px;
 }
 
+.loading-overlay { display: flex; justify-content: center; padding: 80px; }
+
+// ── KPI Grid ───────────────────────────────────────────────
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 16px; margin-bottom: 24px;
 
   @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); }
   @media (max-width: 500px) { grid-template-columns: 1fr; }
 }
 
 .kpi-card {
-  position: relative;
-  overflow: hidden;
-  border-radius: 12px !important;
-  mat-card-content { padding: 20px !important; }
+  position: relative; overflow: hidden;
+  border-radius: 16px !important;
+  border: 1px solid transparent !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07), 0 4px 14px rgba(0,0,0,0.05) !important;
+  transition: transform 0.2s, box-shadow 0.2s;
 
-  .kpi-label { font-size: 13px; color: rgba(0,0,0,0.6); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
-  .kpi-value { font-size: 36px; font-weight: 700; margin: 8px 0 4px; }
-  .kpi-sub { font-size: 13px; color: rgba(0,0,0,0.5); }
-
-  .kpi-icon {
-    position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 48px;
-    width: 48px;
-    height: 48px;
-    opacity: 0.12;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12) !important;
   }
 
-  &.kpi-clients { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); .kpi-value { color: #2e7d32; } .kpi-icon { color: #2e7d32; } }
-  &.kpi-bookings { background: linear-gradient(135deg, #e3f2fd, #bbdefb); .kpi-value { color: #1565c0; } .kpi-icon { color: #1565c0; } }
-  &.kpi-revenue { background: linear-gradient(135deg, #f3e5f5, #e1bee7); .kpi-value { color: #6a1b9a; } .kpi-icon { color: #6a1b9a; } }
-  &.kpi-pending { background: linear-gradient(135deg, #fff3e0, #ffe0b2); .kpi-value { color: #e65100; } .kpi-icon { color: #e65100; } }
+  mat-card-content { padding: 20px !important; }
+
+  .kpi-label {
+    font-size: 12px; color: rgba(0,0,0,0.55); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .kpi-value { font-size: 36px; font-weight: 800; margin: 8px 0 4px; line-height: 1; }
+  .kpi-sub   { font-size: 13px; color: rgba(0,0,0,0.5); }
+
+  .kpi-icon {
+    position: absolute; right: 20px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 52px; width: 52px; height: 52px;
+    opacity: 0.1;
+  }
+
+  &.kpi-clients  { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-color: #bbf7d0 !important; .kpi-value { color: #15803d; } .kpi-icon { color: #15803d; } }
+  &.kpi-bookings { background: linear-gradient(135deg, #eff6ff, #dbeafe); border-color: #bfdbfe !important; .kpi-value { color: #1565c0; } .kpi-icon { color: #1565c0; } }
+  &.kpi-revenue  { background: linear-gradient(135deg, #f5f3ff, #ede9fe); border-color: #ddd6fe !important; .kpi-value { color: #6d28d9; } .kpi-icon { color: #6d28d9; } }
+  &.kpi-pending  { background: linear-gradient(135deg, #fffbeb, #fef3c7); border-color: #fde68a !important; .kpi-value { color: #b45309; } .kpi-icon { color: #b45309; } }
 }
 
+// ── Trend Chart ────────────────────────────────────────────
 .trend-card {
   margin-bottom: 24px;
-  border-radius: 12px !important;
+  border-radius: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
 }
 
 .trend-chart {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  height: 100px;
-  padding: 16px 0;
+  display: flex; align-items: flex-end; gap: 8px;
+  height: 100px; padding: 16px 0;
 }
 
 .trend-bar-wrap {
-  flex: 1;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  flex: 1; display: flex; align-items: flex-end; justify-content: center;
 }
 
 .trend-bar {
-  width: 100%;
-  max-width: 40px;
+  width: 100%; max-width: 40px; min-height: 4px;
   background: linear-gradient(180deg, #7c4dff, #311b92);
   border-radius: 4px 4px 0 0;
-  min-height: 4px;
   transition: height 0.3s;
+  box-shadow: 0 2px 8px rgba(124,77,255,0.3);
 }
 
+// ── Pending Table ──────────────────────────────────────────
 .pending-table-card {
-  border-radius: 12px !important;
+  border-radius: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
   mat-card-header { margin-bottom: 16px; }
+}
+
+.clickable-row {
+  cursor: pointer; transition: background 0.15s;
+  &:hover { background: #f5f3ff; }
 }

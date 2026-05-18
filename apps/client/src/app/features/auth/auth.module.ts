@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule, Routes } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
 import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
@@ -15,6 +16,6 @@ const routes: Routes = [
 
 @NgModule({
   declarations: [LoginComponent, RegisterComponent, ForgotPasswordComponent],
-  imports: [CommonModule, ReactiveFormsModule, RouterModule.forChild(routes)],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule.forChild(routes), MatIconModule],
 })
 export class AuthModule {}

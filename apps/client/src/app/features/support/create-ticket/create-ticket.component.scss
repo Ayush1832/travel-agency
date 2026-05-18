@@ -1,28 +1,26 @@
 .back-btn { margin-bottom: 16px; }
 
 .create-card {
-  max-width: 720px;
-  margin: 0 auto;
-  border-radius: 12px;
+  max-width: 720px; margin: 0 auto;
+  border-radius: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
 }
 
 .form-row-multi {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 0;
+  gap: 16px; margin-bottom: 0;
 }
 
 .submit-row {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 8px;
-
+  display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px;
   button {
-    min-width: 140px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    min-width: 140px; border-radius: 8px !important; font-weight: 600 !important;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .submit-btn {
+    background: linear-gradient(135deg, #1565c0, #0288d1) !important;
+    box-shadow: 0 4px 12px rgba(21,101,192,0.3) !important;
   }
 }
