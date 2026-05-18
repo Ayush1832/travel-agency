@@ -59,12 +59,76 @@ jobs:
             npx ng build --configuration production
             cd ../..
 
-            echo "── Fixing permissions for Nginx ──"
-            chmod o+x /root
-            chmod -R o+rx /root/travel-agency/apps/client/dist
-            chmod -R o+rx /root/travel-agency/apps/admin/dist
+            echo "── Copying builds to /var/www/ ──"
+            mkdir -p /var/www/unlimited.travel
+            mkdir -p /var/www/admin.unlimited.travel
+            rm -rf /var/www/unlimited.travel/*
+            rm -rf /var/www/admin.unlimited.travel/*
+            cp -r /root/travel-agency/apps/client/dist/client/browser/. /var/www/unlimited.travel/
+            cp -r /root/travel-agency/apps/admin/dist/admin/browser/. /var/www/admin.unlimited.travel/
+            chown -R www-data:www-data /var/www/unlimited.travel /var/www/admin.unlimited.travel
+
+            echo "── Writing Nginx config ──"
+            cat > /etc/nginx/sites-available/unlimited.travel << 'NGINX_EOF'
+            server {
+                listen 80;
+                listen [::]:80;
+                server_name unlimited.travel www.unlimited.travel admin.unlimited.travel;
+                return 301 https://$host$request_uri;
+            }
+
+            server {
+                listen 443 ssl;
+                listen [::]:443 ssl;
+                server_name unlimited.travel www.unlimited.travel;
+
+                ssl_certificate /etc/letsencrypt/live/unlimited.travel/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/unlimited.travel/privkey.pem;
+
+                root /var/www/unlimited.travel;
+                index index.html;
+
+                location /api/ {
+                    proxy_pass http://localhost:3000;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+
+                location / {
+                    try_files $uri $uri/ /index.html;
+                }
+            }
+
+            server {
+                listen 443 ssl;
+                listen [::]:443 ssl;
+                server_name admin.unlimited.travel;
+
+                ssl_certificate /etc/letsencrypt/live/admin.unlimited.travel/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/admin.unlimited.travel/privkey.pem;
+
+                root /var/www/admin.unlimited.travel;
+                index index.html;
+
+                location /api/ {
+                    proxy_pass http://localhost:3000;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+
+                location / {
+                    try_files $uri $uri/ /index.html;
+                }
+            }
+            NGINX_EOF
 
             echo "── Reloading Nginx ──"
-            systemctl reload nginx
+            nginx -t && systemctl reload nginx
 
             echo "── Deploy complete ──"
