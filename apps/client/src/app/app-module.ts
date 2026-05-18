@@ -1,10 +1,11 @@
-import { NgModule, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ErrorHandler, NgModule, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { AppRoutingModule } from './app-routing-module';
 import { App } from './app';
 import { AuthInterceptor } from './core/interceptors/auth.interceptor';
+import { ChunkLoadErrorHandler } from './core/handlers/chunk-load-error.handler';
 import { SharedModule } from './shared/shared.module';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 
@@ -21,6 +22,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
   providers: [
     provideBrowserGlobalErrorListeners(),
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+    { provide: ErrorHandler, useClass: ChunkLoadErrorHandler },
   ],
   bootstrap: [App],
 })
