@@ -16,15 +16,13 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: server/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install server dependencies
-        run: npm ci
-        working-directory: server
+        run: npm ci --workspace=server --ignore-scripts
 
       - name: Run tests
-        run: npm test -- --no-coverage --passWithNoTests
-        working-directory: server
+        run: npm test --workspace=server -- --no-coverage --passWithNoTests
 
   deploy:
     name: Deploy to VPS
