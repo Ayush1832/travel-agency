@@ -10,63 +10,93 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: package-lock.json
+      - run: npm ci --workspace=server --ignore-scripts
+      - run: npm test --workspace=server -- --no-coverage --passWithNoTests
 
-      - name: Install server dependencies
-        run: npm ci --workspace=server --ignore-scripts
+  build:
+    name: Build Frontend Apps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
-      - name: Run tests
-        run: npm test --workspace=server -- --no-coverage --passWithNoTests
+      - name: Build client app
+        working-directory: apps/client
+        run: |
+          npm install --legacy-peer-deps --ignore-scripts
+          npx ng build --configuration production
+
+      - name: Build admin app
+        working-directory: apps/admin
+        run: |
+          npm install --legacy-peer-deps --ignore-scripts
+          npx ng build --configuration production
+
+      - name: Package builds
+        run: |
+          tar -czf client.tar.gz -C apps/client/dist/client/browser .
+          tar -czf admin.tar.gz -C apps/admin/dist/admin/browser .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-builds
+          path: |
+            client.tar.gz
+            admin.tar.gz
+          retention-days: 1
 
   deploy:
     name: Deploy to VPS
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test, build]
     steps:
-      - name: Deploy via SSH
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-builds
+          path: .
+
+      - name: Copy frontend builds to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "client.tar.gz,admin.tar.gz"
+          target: "/tmp/"
+
+      - name: Deploy on VPS
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          command_timeout: 15m
+          command_timeout: 10m
           script: |
             set -e
-            cd ~/travel-agency
 
-            echo "── Pulling latest code ──"
+            echo "── Deploying client frontend ──"
+            rm -rf /var/www/unlimited.travel/*
+            tar -xzf /tmp/client.tar.gz -C /var/www/unlimited.travel/
+
+            echo "── Deploying admin frontend ──"
+            rm -rf /var/www/admin.unlimited.travel/*
+            tar -xzf /tmp/admin.tar.gz -C /var/www/admin.unlimited.travel/
+
+            chown -R www-data:www-data /var/www/unlimited.travel /var/www/admin.unlimited.travel
+            rm -f /tmp/client.tar.gz /tmp/admin.tar.gz
+
+            echo "── Updating backend ──"
+            cd ~/travel-agency
             git fetch origin main
             git reset --hard origin/main
-
-            echo "── Rebuilding backend (Docker) ──"
             docker compose -f infra/docker-compose.yml up -d --build server
-
-            echo "── Rebuilding client app ──"
-            cd apps/client
-            HUSKY=0 npm install --legacy-peer-deps --ignore-scripts
-            npx ng build --configuration production
-            cd ../..
-
-            echo "── Rebuilding admin app ──"
-            cd apps/admin
-            HUSKY=0 npm install --legacy-peer-deps --ignore-scripts
-            npx ng build --configuration production
-            cd ../..
-
-            echo "── Copying builds to /var/www/ ──"
-            mkdir -p /var/www/unlimited.travel
-            mkdir -p /var/www/admin.unlimited.travel
-            rm -rf /var/www/unlimited.travel/*
-            rm -rf /var/www/admin.unlimited.travel/*
-            cp -r /root/travel-agency/apps/client/dist/client/browser/. /var/www/unlimited.travel/
-            cp -r /root/travel-agency/apps/admin/dist/admin/browser/. /var/www/admin.unlimited.travel/
-            chown -R www-data:www-data /var/www/unlimited.travel /var/www/admin.unlimited.travel
 
             echo "── Writing Nginx config ──"
             cat > /etc/nginx/sites-available/unlimited.travel << 'NGINX_EOF'
@@ -97,6 +127,15 @@ jobs:
                     proxy_set_header X-Forwarded-Proto $scheme;
                 }
 
+                location = /index.html {
+                    add_header Cache-Control "no-cache, no-store, must-revalidate";
+                }
+
+                location ~* \.(js|css|png|jpg|jpeg|gif|ico|woff2?|ttf|eot|svg)$ {
+                    expires 1y;
+                    add_header Cache-Control "public, immutable";
+                }
+
                 location / {
                     try_files $uri $uri/ /index.html;
                 }
@@ -120,6 +159,15 @@ jobs:
                     proxy_set_header X-Real-IP $remote_addr;
                     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
                     proxy_set_header X-Forwarded-Proto $scheme;
+                }
+
+                location = /index.html {
+                    add_header Cache-Control "no-cache, no-store, must-revalidate";
+                }
+
+                location ~* \.(js|css|png|jpg|jpeg|gif|ico|woff2?|ttf|eot|svg)$ {
+                    expires 1y;
+                    add_header Cache-Control "public, immutable";
                 }
 
                 location / {
